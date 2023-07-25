@@ -1,358 +1,140 @@
-# custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_imports=False)
-
-sub_model_train = [
-    'panoptic_head',
-    'data_preprocessor'
-]
-
-sub_model_optim = {
-    'panoptic_head': {'lr_mult': 1},
-}
-
-# max_epochs = 2000
-max_epochs = 100
-
-optimizer = dict(
-    type='AdamW',
-    sub_model=sub_model_optim,
-    lr=0.0005,
-    weight_decay=1e-3
-)
-
-param_scheduler = [
-    # warm up learning rate scheduler
-    dict(
-        type='LinearLR',
-        start_factor=1e-4,
-        by_epoch=True,
-        begin=0,
-        end=1,
-        # update by iter
-        convert_to_iter_based=True),
-    # main learning rate scheduler
-    dict(
-        type='CosineAnnealingLR',
-        T_max=max_epochs,
-        by_epoch=True,
-        begin=1,
-        end=max_epochs,
-    ),
-]
-
-param_scheduler_callback = dict(
-    type='ParamSchedulerHook'
-)
-
-evaluator_ = dict(
-        type='CocoPLMetric',
-        metric=['bbox', 'segm'],
-        proposal_nums=[1, 10, 100]
-)
-
-evaluator = dict(
-    val_evaluator=evaluator_,
-)
+# model settings
+norm_cfg = dict(type='SyncBN', requires_grad=True)
+model = dict(
+    type='EncoderDecoder',
+    pretrained='open-mmlab://resnet18_v1c',
 
 
-image_size = (1024, 1024)
-
-data_preprocessor = dict(
-    type='mmdet.DetDataPreprocessor',
-    mean=[123.675, 116.28, 103.53],
-    std=[58.395, 57.12, 57.375],
-    bgr_to_rgb=True,
-    pad_size_divisor=32,
-    pad_mask=True,
-    mask_pad_value=0,
-)
-
-num_things_classes = 1
-num_stuff_classes = 0
-num_classes = num_things_classes + num_stuff_classes
-prompt_shape = (90, 4)
-
-
-model_cfg = dict(
-    type='SegSAMAnchorPLer',
-    hyperparameters=dict(
-        optimizer=optimizer,
-        param_scheduler=param_scheduler,
-        evaluator=evaluator,
-    ),
-    need_train_names=sub_model_train,
-    data_preprocessor=data_preprocessor,
+    # define the ResNet as the backbone for PSPNet
     backbone=dict(
-        type='vit_h',
-        checkpoint='pretrain/sam/sam_vit_h_4b8939.pth',
-        # type='vit_b',
-        # checkpoint='pretrain/sam/sam_vit_b_01ec64.pth',
+        type='ResNetV1c',
+        depth=18,
+        num_stages=4,
+        out_indices=(0, 1, 2, 3),
+        dilations=(1, 1, 2, 4),
+        strides=(1, 2, 1, 1),    
+        norm_cfg=norm_cfg,
+        norm_eval=False,
+        style='pytorch',
+        contract_dilation=True
     ),
-    panoptic_head=dict(
-        type='SAMAnchorInstanceHead',
-        neck=dict(
-            type='SAMAggregatorNeck',
-            in_channels=[1280] * 32,
-            # in_channels=[768] * 12,
-            inner_channels=32,
-            selected_channels=range(4, 32, 2),
-            # selected_channels=range(4, 12, 2),
-            out_channels=256,
-            up_sample_scale=4,
-        ),
-        rpn_head=dict(
-            type='mmdet.RPNHead',
-            in_channels=256,
-            feat_channels=256,
-            anchor_generator=dict(
-                type='mmdet.AnchorGenerator',
-                scales=[2, 4, 8, 16, 32, 64],
-                ratios=[0.5, 1.0, 2.0],
-                strides=[8, 16, 32]),
-            bbox_coder=dict(
-                type='mmdet.DeltaXYWHBBoxCoder',
-                target_means=[.0, .0, .0, .0],
-                target_stds=[1.0, 1.0, 1.0, 1.0]),
-            loss_cls=dict(
-                type='mmdet.CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
-            loss_bbox=dict(type='mmdet.SmoothL1Loss', loss_weight=1.0)),
-        roi_head=dict(
-            type='SAMAnchorPromptRoIHead',
-            bbox_roi_extractor=dict(
-                type='mmdet.SingleRoIExtractor',
-                roi_layer=dict(type='RoIAlign', output_size=7, sampling_ratio=0),
-                out_channels=256,
-                featmap_strides=[8, 16, 32]),
-            bbox_head=dict(
-                type='mmdet.Shared2FCBBoxHead',
-                in_channels=256,
-                fc_out_channels=1024,
-                roi_feat_size=7,
-                num_classes=num_classes,
-                bbox_coder=dict(
-                    type='mmdet.DeltaXYWHBBoxCoder',
-                    target_means=[0., 0., 0., 0.],
-                    target_stds=[0.1, 0.1, 0.2, 0.2]),
-                reg_class_agnostic=False,
-                loss_cls=dict(
-                    type='mmdet.CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
-                loss_bbox=dict(type='mmdet.SmoothL1Loss', loss_weight=1.0)),
-            mask_roi_extractor=dict(
-                type='mmdet.SingleRoIExtractor',
-                roi_layer=dict(type='RoIAlign', output_size=14, sampling_ratio=0),
-                out_channels=256,
-                featmap_strides=[8, 16, 32]),
-            mask_head=dict(
-                type='SAMPromptMaskHead',
-                per_query_point=prompt_shape[1],
-                with_sincos=True,
-                class_agnostic=True,
-                loss_mask=dict(
-                    type='mmdet.CrossEntropyLoss', use_mask=True, loss_weight=1.0))),
-        # model training and testing settings
-        train_cfg=dict(
-            rpn=dict(
-                assigner=dict(
-                    type='mmdet.MaxIoUAssigner',
-                    pos_iou_thr=0.7,
-                    neg_iou_thr=0.3,
-                    min_pos_iou=0.3,
-                    match_low_quality=True,
-                    ignore_iof_thr=-1),
-                sampler=dict(
-                    type='mmdet.RandomSampler',
-                    num=512,
-                    pos_fraction=0.5,
-                    neg_pos_ub=-1,
-                    add_gt_as_proposals=False),
-                allowed_border=-1,
-                pos_weight=-1,
-                debug=False),
-            rpn_proposal=dict(
-                nms_pre=2000,
-                max_per_img=1000,
-                nms=dict(type='nms', iou_threshold=0.7),
-                min_bbox_size=0),
-            rcnn=dict(
-                assigner=dict(
-                    type='mmdet.MaxIoUAssigner',
-                    pos_iou_thr=0.5,
-                    neg_iou_thr=0.5,
-                    min_pos_iou=0.5,
-                    match_low_quality=True,
-                    ignore_iof_thr=-1),
-                sampler=dict(
-                    type='mmdet.RandomSampler',
-                    num=256,
-                    pos_fraction=0.25,
-                    neg_pos_ub=-1,
-                    add_gt_as_proposals=True),
-                mask_size=1024,
-                pos_weight=-1,
-                debug=False)),
-        test_cfg=dict(
-            rpn=dict(
-                nms_pre=1000,
-                max_per_img=1000,
-                nms=dict(type='nms', iou_threshold=0.7),
-                min_bbox_size=0),
-            rcnn=dict(
-                score_thr=0.05,
-                nms=dict(type='nms', iou_threshold=0.5),
-                max_per_img=100,
-                mask_thr_binary=0.5)
-        )
+    decode_head=dict(
+        type='PSAHead',
+        in_channels=512,
+        in_index=3,
+        channels=128,
+        mask_size=(97, 97),
+        psa_type='bi-direction',
+        compact=False,
+        shrink_factor=2,
+        normalization_factor=1.0,
+        psa_softmax=True,
+        dropout_ratio=0.1,
+        num_classes=6,
+        norm_cfg=norm_cfg,
+        align_corners=False,
+        loss_decode=dict(
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)),
+    auxiliary_head=dict(
+        type='FCNHead',
+        in_channels=256,
+        in_index=2,
+        channels=64,
+        num_convs=1,
+        concat_input=False,
+        dropout_ratio=0.1,
+        num_classes=6,
+        norm_cfg=norm_cfg,
+        align_corners=False,
+        loss_decode=dict(
+            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.4)),
+    train_cfg=dict(),
+    test_cfg=dict(mode='whole')
     )
-)
 
-task_name = 'whu-ins'
-exp_name = 'E20230720_01'
-logger = dict(
-    type='WandbLogger',
-    project=task_name,
-    group='sam-anchor',
-    name=exp_name
-)
-
-
-callbacks = [
-    param_scheduler_callback,
-    dict(
-        type='ModelCheckpoint',
-        dirpath=f'results/{task_name}/{exp_name}/checkpoints',
-        save_last=True,
-        mode='max',
-        monitor='valsegm_map_0',
-        save_top_k=3,
-        filename='epoch_{epoch}-map_{valsegm_map_0:.4f}'
-    ),
-    dict(
-        type='LearningRateMonitor',
-        logging_interval='step'
-    )
-]
-
-
-trainer_cfg = dict(
-    compiled_model=False,
-    accelerator="auto",
-    strategy="auto",
-    # strategy="ddp",
-    # strategy='ddp_find_unused_parameters_true',
-    # precision='32',
-    # precision='16-mixed',
-    devices=4,
-    default_root_dir=f'results/{task_name}/{exp_name}',
-    # default_root_dir='results/tmp',
-    max_epochs=max_epochs,
-    logger=logger,
-    callbacks=callbacks,
-    log_every_n_steps=10,
-    check_val_every_n_epoch=5,
-    benchmark=True,
-    # sync_batchnorm=True,
-    # fast_dev_run=True,
-
-    # limit_train_batches=1,
-    # limit_val_batches=0,
-    # limit_test_batches=None,
-    # limit_predict_batches=None,
-    # overfit_batches=0.0,
-
-    # val_check_interval=None,
-    # num_sanity_val_steps=0,
-    # enable_checkpointing=None,
-    # enable_progress_bar=None,
-    # enable_model_summary=None,
-    # accumulate_grad_batches=32,
-    # gradient_clip_val=15,
-    # gradient_clip_algorithm='norm',
-    # deterministic=None,
-    # inference_mode: bool=True,
-    use_distributed_sampler=True,
-    # profiler="simple",
-    # detect_anomaly=False,
-    # barebones=False,
-    # plugins=None,
-    # reload_dataloaders_every_n_epochs=0,
-)
-
-
-backend_args = None
+# dataset settings
+dataset_type = 'PotsdamDataset'
+data_root = 'data/potsdam'
+img_norm_cfg = dict(
+    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+crop_size = (512, 512)
 train_pipeline = [
-    dict(type='mmdet.LoadImageFromFile'),
-    dict(type='mmdet.LoadAnnotations', with_bbox=True, with_mask=True),
-    dict(type='mmdet.Resize', scale=image_size),
-    dict(type='mmdet.RandomFlip', prob=0.5),
-    dict(type='mmdet.PackDetInputs')
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations', reduce_zero_label=True),
+    dict(type='Resize', img_scale=(512, 512), ratio_range=(0.5, 2.0)),
+    dict(type='RandomCrop', crop_size=crop_size, cat_max_ratio=0.75),
+    dict(type='RandomFlip', prob=0.5),
+    dict(type='PhotoMetricDistortion'),
+    dict(type='Normalize', **img_norm_cfg),
+    dict(type='Pad', size=crop_size, pad_val=0, seg_pad_val=255),
+    dict(type='DefaultFormatBundle'),
+    dict(type='Collect', keys=['img', 'gt_semantic_seg']),
 ]
-
 test_pipeline = [
-    dict(type='mmdet.LoadImageFromFile', backend_args=backend_args),
-    dict(type='mmdet.Resize', scale=image_size),
-    # If you don't have a gt annotation, delete the pipeline
-    dict(type='mmdet.LoadAnnotations', with_bbox=True, with_mask=True),
+    dict(type='LoadImageFromFile'),
     dict(
-        type='mmdet.PackDetInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor'))
+        type='MultiScaleFlipAug',
+        img_scale=(512, 512),
+        # img_ratios=[0.5, 0.75, 1.0, 1.25, 1.5, 1.75],
+        flip=False,
+        transforms=[
+            dict(type='Resize', keep_ratio=True),
+            dict(type='RandomFlip'),
+            dict(type='Normalize', **img_norm_cfg),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img']),
+        ])
 ]
+data = dict(
+    samples_per_gpu=4,
+    workers_per_gpu=4,
+    train=dict(
+        type=dataset_type,
+        data_root=data_root,
+        img_dir='img_dir/train',
+        ann_dir='ann_dir/train',
+        pipeline=train_pipeline),
+    val=dict(
+        type=dataset_type,
+        data_root=data_root,
+        img_dir='img_dir/val',
+        ann_dir='ann_dir/val',
+        pipeline=test_pipeline),
+    test=dict(
+        type=dataset_type,
+        data_root=data_root,
+        img_dir='img_dir/val',
+        ann_dir='ann_dir/val',
+        pipeline=test_pipeline))
 
+# runtime settings
+log_config = dict(
+    interval=50,
+    hooks=[
+        dict(type='TextLoggerHook', by_epoch=False),
+        # dict(type='TensorboardLoggerHook')
+        # dict(type='PaviLoggerHook') # for internal services
+    ])
+# yapf:enable
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+load_from = None
+resume_from = None
+workflow = [('train', 1)]
+cudnn_benchmark = True
 
-train_batch_size_per_gpu = 2
-train_num_workers = 2
-test_batch_size_per_gpu = 2
-test_num_workers = 2
-persistent_workers = True
+# optimizer
+optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0005)
+optimizer_config = dict()
+# learning policy
+lr_config = dict(policy='poly', power=0.9, min_lr=1e-4, by_epoch=False)
+# runtime settings
+# runner = dict(type='IterBasedRunner', max_iters=80000)
+# checkpoint_config = dict(by_epoch=False, interval=8000)
+# evaluation = dict(interval=8000, metric='mIoU', pre_eval=True)
 
-
-data_parent = 'data/WHU'
-train_data_prefix = 'train/'
-val_data_prefix = 'test/'
-dataset_type = 'WHUInsSegDataset'
-
-
-val_loader = dict(
-        batch_size=test_batch_size_per_gpu,
-        num_workers=test_num_workers,
-        persistent_workers=persistent_workers,
-        pin_memory=True,
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_parent,
-            # ann_file='NWPU_instances_val.json',
-            # data_prefix=dict(img_path='positive image set'),
-            # ann_file='annotations/SSDD_instances_val.json',
-            # data_prefix=dict(img_path='imgs'),
-            ann_file='annotations/WHU_building_test.json',
-            data_prefix=dict(img_path=val_data_prefix + '/image'),
-            test_mode=True,
-            filter_cfg=dict(filter_empty_gt=True, min_size=32),
-            pipeline=test_pipeline,
-            backend_args=backend_args))
-
-datamodule_cfg = dict(
-    type='PLDataModule',
-    train_loader=dict(
-        batch_size=train_batch_size_per_gpu,
-        num_workers=train_num_workers,
-        persistent_workers=persistent_workers,
-        pin_memory=True,
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_parent,
-            # ann_file='NWPU_instances_train.json',
-            # data_prefix=dict(img_path='positive image set'),
-            # ann_file='annotations/SSDD_instances_train.json',
-            # data_prefix=dict(img_path='imgs'),
-            ann_file='annotations/WHU_building_train.json',
-            data_prefix=dict(img_path=train_data_prefix + '/image'),
-            filter_cfg=dict(filter_empty_gt=True, min_size=32),
-            pipeline=train_pipeline,
-            backend_args=backend_args)
-    ),
-    val_loader=val_loader,
-    # test_loader=val_loader
-    predict_loader=val_loader
-)
-
-resume = None
+runner = dict(type='EpochBasedRunner', max_epochs=5)
+#每一次epoch都保存一次模型
+checkpoint_config = dict(by_epoch=True, interval=1)
+#每一次epoch都计算一次验证
+evaluation = dict(interval=1, metric=['mIoU', 'mFscore'], pre_eval=True)
