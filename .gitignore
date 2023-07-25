@@ -1,3 +1,7 @@
+# ourselves
+data/*
+!data/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -103,8 +107,8 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-data/
-data
+# data/
+# data
 .vscode
 .idea
 .DS_Store
