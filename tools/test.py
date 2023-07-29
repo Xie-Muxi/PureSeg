@@ -6,7 +6,7 @@ from mmengine.config import Config, DictAction
 from mmengine.evaluator import DumpResults
 from mmengine.runner import Runner
 
-from mmengine_template.registry import RUNNERS
+from rssam.registry import RUNNERS
 
 
 def parse_args():

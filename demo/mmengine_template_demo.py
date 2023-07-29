@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 
 from mmengine.registry import DefaultScope
 
-from mmengine_template.infer import CustomInferencer
+from rssam.infer import CustomInferencer
 
 
 def parse_args():
