@@ -28,6 +28,12 @@ def convert_whu_to_coco(img_dir, out_file, image_prefix):
     annotations = []
     images = []
     obj_count = 0
+    
+    print('Converting WHU dataset to COCO format')
+    # print out the arguments
+    print('image directory: {}'.format(img_dir))
+    print('output json file: {}'.format(out_file))
+
     for idx, img_file in enumerate(track_iter_progress(img_files)):
         filename = osp.basename(img_file)
         img_path = osp.join(image_prefix, filename)
