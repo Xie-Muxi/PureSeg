@@ -40,15 +40,15 @@ def convert_whu_to_coco(img_dir, out_file, image_prefix):
     print('output json file: {}'.format(out_file))
 
     for idx, img_file in enumerate(track_iter_progress(img_files)):
-        # filename = osp.basename(img_file)
-        filename = img_file
+        filename = osp.basename(img_file)
         print(filename)
         img_path = filename
         height, width = mmcv.imread(img_path).shape[:2]
         images.append(
             dict(id=idx, file_name=filename, height=height, width=width))
 
-        segm_file = img_dir + '/label/' + filename
+
+        segm_file = img_dir + '/label/' + filename - '/'
         segm_img = mmcv.imread(segm_file, flag='unchanged', backend='cv2')
 
         num_labels, instances, stats, centroids = cv2.connectedComponentsWithStats(segm_img, connectivity=4)
