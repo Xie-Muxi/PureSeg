@@ -23,7 +23,12 @@ def parse_args():
 
 def convert_whu_to_coco(img_dir, out_file, image_prefix):
     img_files = glob.glob(osp.join(img_dir, 'image/*.tif'))
-    # print('find {} images in {}'.format(len(img_files), img_dir))
+
+    # print first 10 images
+    print('The first 10 images are:')
+    print(img_files[:10])
+
+    print('find {} images in {}'.format(len(img_files), img_dir))
     # img_files = mmcv.utils.scandir(img_dir + '/image')
     annotations = []
     images = []
