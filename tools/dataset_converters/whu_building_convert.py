@@ -1,4 +1,5 @@
 import argparse
+import glob
 import os.path as osp
 import cv2
 import mmcv
@@ -21,8 +22,8 @@ def parse_args():
     return args
 
 def convert_whu_to_coco(img_dir, out_file, image_prefix):
-    # img_files = glob.glob(osp.join(img_dir, 'image/*.tif'))
-    img_files = mmcv.utils.scandir(img_dir + '/image')
+    img_files = glob.glob(osp.join(img_dir, 'image/*.tif'))
+    # img_files = mmcv.utils.scandir(img_dir + '/image')
     annotations = []
     images = []
     obj_count = 0
