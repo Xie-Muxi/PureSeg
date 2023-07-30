@@ -13,7 +13,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Convert WHU Building dataset to COCO format')
     parser.add_argument('-p', help='path to the image directory')
     parser.add_argument('-op', default=None, help='path to the output json file')
-    parser.add_argument('--image_prefix', default=None,help='prefix of image path')
+    parser.add_argument('--image_prefix', default='',help='prefix of image path')
     args = parser.parse_args()
 
     if args.op is None:
@@ -23,6 +23,7 @@ def parse_args():
 
 def convert_whu_to_coco(img_dir, out_file, image_prefix):
     img_files = glob.glob(osp.join(img_dir, 'image/*.tif'))
+    # print('find {} images in {}'.format(len(img_files), img_dir))
     # img_files = mmcv.utils.scandir(img_dir + '/image')
     annotations = []
     images = []
