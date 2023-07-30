@@ -1,3 +1,4 @@
+import argparse
 import os.path as osp
 
 import mmcv
@@ -5,6 +6,16 @@ import mmcv
 from mmengine.fileio import dump, load
 from mmengine.utils import track_iter_progress
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Convert balloon dataset to COCO format')
+    parser.add_argument('-p', '--path', help='path to the balloon dataset directory')
+    parser.add_argument('-o', '--out', default=None, help='path to the output directory')
+    args = parser.parse_args()
+
+    if args.out is None:
+        args.out = args.path
+
+    return args
 
 def convert_balloon_to_coco(ann_file, out_file, image_prefix):
     data_infos = load(ann_file)
@@ -52,9 +63,24 @@ def convert_balloon_to_coco(ann_file, out_file, image_prefix):
 
 
 if __name__ == '__main__':
-    convert_balloon_to_coco(ann_file='data/balloon/train/via_region_data.json',
-                            out_file='data/balloon/train/annotation_coco.json',
-                            image_prefix='data/balloon/train')
-    convert_balloon_to_coco(ann_file='data/balloon/val/via_region_data.json',
-                            out_file='data/balloon/val/annotation_coco.json',
-                            image_prefix='data/balloon/val')
+    args = parse_args()
+    #ann_file, out_file, image_prefix
+    for split in ['train', 'val']:
+        ann_file = osp.join(args.path, 'via_region_data.json')
+        out_file = osp.join(args.out, 'annotations.json')
+        image_prefix = osp.join(args.path, split)
+        convert_balloon_to_coco(ann_file, out_file, image_prefix)
+
+    # convert_balloon_to_coco(
+    #     img_dir=osp.join(args.path, 'JPEGImages'),
+    #     ann_dir=osp.join(args.path, 'SegmentationClass'),
+    #     out_file=osp.join(args.out, 'annotations.json'))
+
+
+# if __name__ == '__main__':
+#     convert_balloon_to_coco(ann_file='data/balloon/train/via_region_data.json',
+#                             out_file='data/balloon/train/annotation_coco.json',
+#                             image_prefix='data/balloon/train')
+#     convert_balloon_to_coco(ann_file='data/balloon/val/via_region_data.json',
+#                             out_file='data/balloon/val/annotation_coco.json',
+#                             image_prefix='data/balloon/val')
