@@ -73,8 +73,8 @@ def main():
     data_root = args.p
     train_dir = osp.join(data_root, 'train')
     val_dir = osp.join(data_root, 'val')
-    convert_whu_to_coco(train_dir, args.out_file, args.image_prefix)
-    convert_whu_to_coco(val_dir, args.out_file, args.image_prefix)
+    convert_whu_to_coco(train_dir, args.op, args.image_prefix)
+    convert_whu_to_coco(val_dir, args.op, args.image_prefix)
 
 if __name__ == '__main__':
     main()
