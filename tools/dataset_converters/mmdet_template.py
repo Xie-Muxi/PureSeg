@@ -66,8 +66,8 @@ if __name__ == '__main__':
     args = parse_args()
     #ann_file, out_file, image_prefix
     for split in ['train', 'val']:
-        ann_file = osp.join(args.path, 'via_region_data.json')
-        out_file = osp.join(args.out, 'annotations.json')
+        ann_file = osp.join(args.path, split, 'via_region_data.json')
+        out_file = osp.join(args.out, split, 'annotations.json')
         image_prefix = osp.join(args.path, split)
         convert_balloon_to_coco(ann_file, out_file, image_prefix)
 
