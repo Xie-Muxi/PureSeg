@@ -42,7 +42,7 @@ def convert_whu_to_coco(img_dir, out_file, image_prefix):
     for idx, img_file in enumerate(track_iter_progress(img_files)):
         filename = osp.basename(img_file)
         print(filename)
-        img_path = osp.join(filename,image_prefix)
+        img_path = filename
         height, width = mmcv.imread(img_path).shape[:2]
         images.append(
             dict(id=idx, file_name=filename, height=height, width=width))
