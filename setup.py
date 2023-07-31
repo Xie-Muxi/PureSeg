@@ -14,7 +14,7 @@ def readme():
     return content
 
 
-version_file = 'mmengine_template/version.py'
+version_file = 'rssam/version.py'
 
 
 def get_version():

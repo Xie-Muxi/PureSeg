@@ -71,16 +71,3 @@ if __name__ == '__main__':
         image_prefix = osp.join(args.path, split)
         convert_balloon_to_coco(ann_file, out_file, image_prefix)
 
-    # convert_balloon_to_coco(
-    #     img_dir=osp.join(args.path, 'JPEGImages'),
-    #     ann_dir=osp.join(args.path, 'SegmentationClass'),
-    #     out_file=osp.join(args.out, 'annotations.json'))
-
-
-# if __name__ == '__main__':
-#     convert_balloon_to_coco(ann_file='data/balloon/train/via_region_data.json',
-#                             out_file='data/balloon/train/annotation_coco.json',
-#                             image_prefix='data/balloon/train')
-#     convert_balloon_to_coco(ann_file='data/balloon/val/via_region_data.json',
-#                             out_file='data/balloon/val/annotation_coco.json',
-#                             image_prefix='data/balloon/val')

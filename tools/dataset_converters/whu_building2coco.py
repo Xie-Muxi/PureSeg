@@ -1,3 +1,10 @@
+'''
+@File    :   whu_building2coco.py
+@Time    :   2023/07/30 23:39:03
+@Author  :   Xie-Muxi
+@Desc    :   None
+'''
+
 import argparse
 import cv2
 import numpy as np
