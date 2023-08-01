@@ -7,5 +7,6 @@ from .sam_prompt_generator import SAMTransformerPromptGenNeck, SAMPromptConvNeck
 
 __all__ = [
     'TransformerEncoderNeck', 'TransformerEDecoderNeck', 'LinearProj',
-    'HFGPTTransformerDecoderNeck', 'Sirens', 'ModulatedSirens'
+    'HFGPTTransformerDecoderNeck', 'Sirens', 'ModulatedSirens',
+    'SAMTransformerPromptGenNeck', 'SAMPromptConvNeck', 'SAMTransformerEDPromptGenNeck', 'SAMAggregatorNeck'
 ]

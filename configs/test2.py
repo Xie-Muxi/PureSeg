@@ -1,5 +1,5 @@
 custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_imports=False)
-
+import mmdet
 
 sub_model_train = [
     'panoptic_head',
@@ -12,7 +12,8 @@ sub_model_optim = {
 
 max_epochs = 100
 
-from torch.optim import AdamW
+# from mmengine.optim.optimizer import AdamW
+from torch.optim.adamw import AdamW
 optimizer = dict(
     type=AdamW,
     sub_model=sub_model_optim,
@@ -20,10 +21,13 @@ optimizer = dict(
     weight_decay=1e-3
 )
 
+# from torch.optim import lr_scheduler as LinearLR
+import mmengine.optim.scheduler as scheduler
+
 param_scheduler = [
     # warm up learning rate scheduler
     dict(
-        type='LinearLR',
+        type=scheduler.LinearLR,
         start_factor=1e-4,
         by_epoch=True,
         begin=0,
@@ -32,7 +36,7 @@ param_scheduler = [
         convert_to_iter_based=True),
     # main learning rate scheduler
     dict(
-        type='CosineAnnealingLR',
+        type=scheduler.CosineAnnealingLR,
         T_max=max_epochs,
         by_epoch=True,
         begin=1,
@@ -76,8 +80,9 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 prompt_shape = (60, 4)
 
+from mmpl.models import SegSAMAnchorPLer, SAMAnchorInstanceHead, SAMAnchorPromptRoIHead, SAMPromptMaskHead, SAMAggregatorNeck
 model_cfg = dict(
-    type='SegSAMAnchorPLer',
+    type=SegSAMAnchorPLer,
     hyperparameters=dict(
         optimizer=optimizer,
         param_scheduler=param_scheduler,
@@ -86,15 +91,15 @@ model_cfg = dict(
     need_train_names=sub_model_train,
     data_preprocessor=data_preprocessor,
     backbone=dict(
-        type='vit_h',
+        type='vit_h', #? this may be binded 'mmpl/models/sam/build_sam.py'??
         checkpoint='pretrain/sam/sam_vit_h_4b8939.pth',
         # type='vit_b',
         # checkpoint='pretrain/sam/sam_vit_b_01ec64.pth',
     ),
     panoptic_head=dict(
-        type='SAMAnchorInstanceHead',
+        type=SAMAnchorInstanceHead,
         neck=dict(
-            type='SAMAggregatorNeck',
+            type=SAMAggregatorNeck,
             in_channels=[1280] * 32,
             # in_channels=[768] * 12,
             inner_channels=32,
@@ -104,11 +109,13 @@ model_cfg = dict(
             up_sample_scale=4,
         ),
         rpn_head=dict(
-            type='mmdet.RPNHead',
+            # type='mmdet.RPNHead',
+            type=mmdet.models.dense_heads.rpn_head.RPNHead,
             in_channels=256,
             feat_channels=256,
             anchor_generator=dict(
-                type='mmdet.AnchorGenerator',
+                # type='mmdet.AnchorGenerator,
+                type=mmdet.models.task_modules.AnchorGenerator,
                 scales=[2, 4, 8, 16, 32, 64],
                 ratios=[0.5, 1.0, 2.0],
                 strides=[8, 16, 32]),
