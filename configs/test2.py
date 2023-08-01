@@ -1,7 +1,5 @@
 custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_imports=False)
 
-from mmdet import DetDataPreprocessor
-
 
 sub_model_train = [
     'panoptic_head',
@@ -12,10 +10,11 @@ sub_model_optim = {
     'panoptic_head': {'lr_mult': 1},
 }
 
-max_epochs = 1200
+max_epochs = 100
 
+from torch.optim import AdamW
 optimizer = dict(
-    type='AdamW',
+    type=AdamW,
     sub_model=sub_model_optim,
     lr=0.0005,
     weight_decay=1e-3
@@ -41,14 +40,16 @@ param_scheduler = [
     ),
 ]
 
+from mmengine.hooks import ParamSchedulerHook
 param_scheduler_callback = dict(
-    type='ParamSchedulerHook'
+    type=ParamSchedulerHook
 )
 
+from mmpl.evaluation.metrics import CocoPLMetric
 evaluator_ = dict(
-        type='CocoPLMetric',
-        metric=['bbox', 'segm'],
-        proposal_nums=[1, 10, 100]
+    type=CocoPLMetric,
+    metric=['bbox', 'segm'],
+    proposal_nums=[1, 10, 100]
 )
 
 evaluator = dict(

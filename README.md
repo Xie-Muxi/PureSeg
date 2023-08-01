@@ -1,3 +1,8 @@
+# Getting Start
+## Use symbolic links to link data and pretrain to their respective folders.
+
+
+
 # MMEngine Template
 
 **MMEngine Template** is a template for the best practices in MMEngine. Config&Resgitry in [MMEngine](https://github.com/open-mmlab/mmengine) provides an elegant solution for developers to customize their modules and record experimental information. However, due to the learning curve of the Config&Registry system, developers often encounter some problems during development. Therefore, we provide the **MMEngine Template** to guide developers in achieving the best practices in various deep learning fields based on MMEngine.
