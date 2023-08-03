@@ -6,7 +6,7 @@ from mmpl.registry import MODELS
 from mmseg.utils import SampleList
 from .base_pler import BasePLer
 import torch.nn.functional as F
-from modules.sam import sam_model_registry
+from ..sam import sam_model_registry
 
 
 @MODELS.register_module()

@@ -216,7 +216,7 @@ model_cfg = dict(
 )
 
 
-task_name = 'nwpu_ins'
+task_name = 'dev'
 exp_name = 'E20230629_1'
 logger = dict(
     type='WandbLogger',
@@ -252,7 +252,7 @@ trainer_cfg = dict(
     # strategy='ddp_find_unused_parameters_true',
     # precision='32',
     # precision='16-mixed',
-    devices=8,
+    devices=4,
     default_root_dir=f'results/{task_name}/{exp_name}',
     # default_root_dir='results/tmp',
     max_epochs=max_epochs,

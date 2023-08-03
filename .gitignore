@@ -1,6 +1,8 @@
 # ourselves
 data/*
 pretrain/*
+mmengine*
+mmcv*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

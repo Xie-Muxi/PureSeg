@@ -10,7 +10,7 @@ from mmseg.structures import SegDataSample
 from mmseg.utils import SampleList, OptSampleList
 from .base_pler import BasePLer
 import torch.nn.functional as F
-from modules.sam import sam_model_registry
+from ..sam import sam_model_registry
 
 
 @MODELS.register_module()
