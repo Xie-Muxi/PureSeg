@@ -14,7 +14,8 @@ from mmengine.model import BaseModel
 
 
 @MODELS.register_module()
-class BasePLer(pl.LightningModule, BaseModel):
+# class BasePLer(pl.LightningModule, BaseModel):
+class BasePLer(BaseModel): #! test
     def __init__(
             self,
             hyperparameters,
