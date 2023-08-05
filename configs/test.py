@@ -1,4 +1,4 @@
-# custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_imports=False)
+custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_imports=False)
 
 sub_model_train = [
     'panoptic_head',
@@ -77,7 +77,7 @@ num_classes = num_things_classes + num_stuff_classes
 prompt_shape = (60, 4)
 
 model = dict(
-    type='SegSAMAnchorPLer',
+    type='SegSAMAnchor',
     # hyperparameters=dict(
     #     optimizer=optimizer,
     #     param_scheduler=param_scheduler,
@@ -354,7 +354,9 @@ datamodule_cfg = dict(
     predict_loader=val_loader
 )
 
-from rssam.datasets import NWPUInsSegDataset
+# from rssam.datasets import NWPUInsSegDataset
+
+
 train_dataloader = dict(
     sampler=dict(type='DefaultSampler', shuffle=True),
     batch_size=train_batch_size_per_gpu,
