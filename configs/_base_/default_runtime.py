@@ -1,5 +1,5 @@
 # define scope here.
-default_scope = 'mmengine_template'
+default_scope = 'rssam'
 
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),

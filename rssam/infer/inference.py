@@ -28,9 +28,9 @@ class CustomInferencer(BaseInferencer):
         """
         if cfg.get('visualizer') is not None:
             visualizer = cfg.visualizer
-            visualizer.setdefault('name', 'mmengine_template')
+            visualizer.setdefault('name', 'rssam')
             return Visualizer.get_instance(**cfg.visualizer)
-        return Visualizer(name='mmengine_template')
+        return Visualizer(name='rssam')
 
     def _init_pipeline(self, cfg):
         """Return a pipeline to process input data.
