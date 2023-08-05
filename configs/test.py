@@ -218,9 +218,10 @@ logger = dict(
     name=exp_name
 )
 
-vis_backends = [dict(type='LocalVisBackend'), dict(type='WandBVisBackend')]
-visualizer = dict(vis_backends=vis_backends)
+# vis_backends = [dict(type='LocalVisBackend'), dict(type='WandBVisBackend')]
+# visualizer = dict(vis_backends=vis_backends)
 
+visualizer = dict(type='Visualizer', vis_backends=[dict(type='WandbVisBackend')]),
 
 callbacks = [
     param_scheduler_callback,
