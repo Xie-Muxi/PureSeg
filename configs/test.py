@@ -417,3 +417,6 @@ val_evaluator = dict(
 test_evaluator = val_evaluator
 
 
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
