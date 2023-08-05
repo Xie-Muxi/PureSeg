@@ -44,9 +44,9 @@ param_scheduler = [
     ),
 ]
 
-# param_scheduler_callback = dict(
-#     type='ParamSchedulerHook'
-# )
+param_scheduler_callback = dict(
+    type='ParamSchedulerHook'
+)
 
 evaluator_ = dict(
     type='CocoPLMetric',
@@ -222,22 +222,22 @@ vis_backends = [dict(type='LocalVisBackend'), dict(type='WandBVisBackend')]
 visualizer = dict(vis_backends=vis_backends)
 
 
-# callbacks = [
-#     param_scheduler_callback,
-#     dict(
-#         type='ModelCheckpoint',
-#         dirpath=f'results/{task_name}/{exp_name}/checkpoints',
-#         save_last=True,
-#         mode='max',
-#         monitor='valsegm_map_0',
-#         save_top_k=3,
-#         filename='epoch_{epoch}-map_{valsegm_map_0:.4f}'
-#     ),
-#     dict(
-#         type='LearningRateMonitor',
-#         logging_interval='step'
-#     )
-# ]
+callbacks = [
+    param_scheduler_callback,
+    dict(
+        type='ModelCheckpoint',
+        dirpath=f'results/{task_name}/{exp_name}/checkpoints',
+        save_last=True,
+        mode='max',
+        monitor='valsegm_map_0',
+        save_top_k=3,
+        filename='epoch_{epoch}-map_{valsegm_map_0:.4f}'
+    ),
+    dict(
+        type='LearningRateMonitor',
+        logging_interval='step'
+    )
+]
 
 
 train_cfg = dict(
