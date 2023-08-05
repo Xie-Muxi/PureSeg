@@ -361,7 +361,7 @@ train_dataloader = dict(
     num_workers=train_num_workers,
     persistent_workers=persistent_workers,
     dataset=dict(
-    type=NWPUInsSegDataset,
+    type='NWPUInsSegDataset',
     data_root=data_parent,
     ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_train.json',
     data_prefix=dict(img='positive image set'),
@@ -376,7 +376,7 @@ val_dataloader = dict(
     num_workers=test_num_workers,
     persistent_workers=persistent_workers,
     dataset=dict(
-    type=NWPUInsSegDataset,
+    type='NWPUInsSegDataset',
     data_root=data_parent,
     ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_val.json',
     data_prefix=dict(img='positive image set'),
