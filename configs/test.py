@@ -420,3 +420,9 @@ test_evaluator = val_evaluator
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
+
+env_cfg = dict(
+    cudnn_benchmark=False,
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+    dist_cfg=dict(backend='nccl'),
+)
