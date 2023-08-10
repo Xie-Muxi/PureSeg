@@ -9,7 +9,8 @@ from mmdet.evaluation import CocoMetric
 
 # dataset settings
 dataset_type = CocoDataset
-data_root = 'data/coco/'
+# data_root = 'data/coco/'
+data_root = '/nfs/home/3002_hehui/xmx/COCO2017/'
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module

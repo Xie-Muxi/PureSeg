@@ -1,4 +1,12 @@
-custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_imports=False)
+# custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_imports=False)
+
+custom_imports = dict(imports=['rssam.datasets', 'rssam.models'], allow_failed_imports=False)
+
+
+# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+
+default_scope = 'rssam'
 
 sub_model_train = [
     'panoptic_head',
@@ -12,12 +20,17 @@ sub_model_optim = {
 # max_epochs = 1200
 max_epochs = 100
 
-optimizer = dict(
-    type='AdamW',
-    sub_model=sub_model_optim,
-    lr=0.0005,
-    weight_decay=1e-3
-)
+# optimizer = dict(
+#     type='AdamW',
+#     sub_model=sub_model_optim,
+#     lr=0.0005,
+#     weight_decay=1e-3
+# )
+
+optimizer = dict(type='AdamW', lr=0.0005, momentum=0.9, weight_decay=0.001)
+optim_wrapper = dict(optimizer=optimizer)
+
+
 
 param_scheduler = [
     # warm up learning rate scheduler
@@ -44,9 +57,9 @@ param_scheduler_callback = dict(
 )
 
 evaluator_ = dict(
-        type='CocoPLMetric',
-        metric=['bbox', 'segm'],
-        proposal_nums=[1, 10, 100]
+    type='CocoPLMetric',
+    metric=['bbox', 'segm'],
+    proposal_nums=[1, 10, 100]
 )
 
 evaluator = dict(
@@ -71,13 +84,14 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 prompt_shape = (60, 4)
 
-model_cfg = dict(
-    type='SegSAMAnchorPLer',
-    hyperparameters=dict(
-        optimizer=optimizer,
-        param_scheduler=param_scheduler,
-        evaluator=evaluator,
-    ),
+# from rssam.models import SegSAMAnchor
+model = dict(
+    type='SegSAMAnchor',
+    # hyperparameters=dict(
+    #     optimizer=optimizer,
+    #     param_scheduler=param_scheduler,
+    #     evaluator=evaluator,
+    # ),
     need_train_names=sub_model_train,
     data_preprocessor=data_preprocessor,
     backbone=dict(
@@ -213,6 +227,10 @@ logger = dict(
     name=exp_name
 )
 
+# vis_backends = [dict(type='LocalVisBackend'), dict(type='WandBVisBackend')]
+# visualizer = dict(vis_backends=vis_backends)
+
+visualizer = dict(type='Visualizer', vis_backends=[dict(type='WandbVisBackend')])
 
 callbacks = [
     param_scheduler_callback,
@@ -232,7 +250,7 @@ callbacks = [
 ]
 
 
-trainer_cfg = dict(
+train_cfg = dict(
     compiled_model=False,
     accelerator="auto",
     strategy="auto",
@@ -293,7 +311,7 @@ test_pipeline = [
     dict(type='mmdet.LoadAnnotations', with_bbox=True, with_mask=True),
     dict(
         type='mmdet.PackDetInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+        meta_keys=('img_id', 'img', 'ori_shape', 'img_shape',
                    'scale_factor'))
 ]
 
@@ -318,7 +336,7 @@ val_loader = dict(
             type=dataset_type,
             data_root=data_parent,
             ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_val.json',
-            data_prefix=dict(img_path='positive image set'),
+            data_prefix=dict(img='positive image set'),
             test_mode=True,
             filter_cfg=dict(filter_empty_gt=True, min_size=32),
             pipeline=test_pipeline,
@@ -335,7 +353,7 @@ datamodule_cfg = dict(
             type=dataset_type,
             data_root=data_parent,
             ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_train.json',
-            data_prefix=dict(img_path='positive image set'),
+            data_prefix=dict(img='positive image set'),
             filter_cfg=dict(filter_empty_gt=True, min_size=32),
             pipeline=train_pipeline,
             backend_args=backend_args)
@@ -343,4 +361,80 @@ datamodule_cfg = dict(
     val_loader=val_loader,
     # test_loader=val_loader
     predict_loader=val_loader
+)
+
+# from rssam.datasets import NWPUInsSegDataset
+
+
+train_dataloader = dict(
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    batch_size=train_batch_size_per_gpu,
+    num_workers=train_num_workers,
+    persistent_workers=persistent_workers,
+    dataset=dict(
+    type='NWPUInsSegDataset',
+    data_root=data_parent,
+    ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_train.json',
+    data_prefix=dict(img='positive image set'),
+    filter_cfg=dict(filter_empty_gt=True, min_size=32),
+    pipeline=train_pipeline,
+    backend_args=backend_args)
+)
+
+val_dataloader = dict(
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    batch_size=train_batch_size_per_gpu,
+    num_workers=test_num_workers,
+    persistent_workers=persistent_workers,
+    dataset=dict(
+    type='NWPUInsSegDataset',
+    data_root=data_parent,
+    ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_val.json',
+    data_prefix=dict(img='positive image set'),
+    filter_cfg=dict(filter_empty_gt=True, min_size=32),
+    pipeline=train_pipeline,
+    backend_args=backend_args)
+)
+
+val_loader = dict(
+    batch_size=test_batch_size_per_gpu,
+    num_workers=test_num_workers,
+    persistent_workers=persistent_workers,
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_parent,
+        ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_val.json',
+        data_prefix=dict(img='positive image set'),
+        test_mode=True,
+        filter_cfg=dict(filter_empty_gt=True, min_size=32),
+        pipeline=test_pipeline,
+        backend_args=backend_args)
+)
+
+
+test_dataloader = val_dataloader
+
+
+data_root = data_parent
+
+# CocoMetric
+from mmdet.evaluation.metrics import CocoMetric
+
+val_evaluator = dict(
+    type=CocoMetric,
+    ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_val.json',
+    metric=['bbox', 'segm'],
+    format_only=False,
+    backend_args=backend_args)
+test_evaluator = val_evaluator
+
+
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
+
+
+env_cfg = dict(
+    cudnn_benchmark=False,
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
+    dist_cfg=dict(backend='nccl'),
 )

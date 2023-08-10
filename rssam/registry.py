@@ -39,68 +39,71 @@ LOOPS = Registry('loop', parent=MMENGINE_LOOPS)
 HOOKS = Registry(
     'hook',
     parent=MMENGINE_HOOKS,
-    locations=['mmengine_template.engine.hooks'])
+    locations=['rssam.engine.hooks'])
 
 # manage data-related modules
 DATASETS = Registry(
     'dataset',
     parent=MMENGINE_DATASETS,
-    locations=['mmengine_template.datasets'])
+    locations=['rssam.datasets'])
 
 TRANSFORMS = Registry(
     'transform',
     parent=MMENGINE_TRANSFORMS,
-    locations=['mmengine_template.datasets.transform'])
+    locations=['rssam.datasets.transform'])
 
 # manage all kinds of modules inheriting `nn.Module`
+# MODELS = Registry(
+#     'model', parent=MMENGINE_MODELS, locations=['rssam.models'])
+
 MODELS = Registry(
-    'model', parent=MMENGINE_MODELS, locations=['mmengine_template.models'])
+    'model', locations=['rssam.models'])
 
 # manage all kinds of model wrappers like 'MMDistributedDataParallel'
 MODEL_WRAPPERS = Registry(
     'model_wrapper',
     parent=MMENGINE_MODEL_WRAPPERS,
-    locations=['mmengine_template.models'])
+    locations=['rssam.models'])
 # manage all kinds of weight initialization modules like `Uniform`
 WEIGHT_INITIALIZERS = Registry(
     'weight initializer',
     parent=MMENGINE_WEIGHT_INITIALIZERS,
-    locations=['mmengine_template.models'])
+    locations=['rssam.models'])
 
 # manage all kinds of optimizers like `SGD` and `Adam`
 OPTIMIZERS = Registry(
     'optimizer',
     parent=MMENGINE_OPTIMIZERS,
-    locations=['mmengine_template.engine.optimizer'])
+    locations=['rssam.engine.optimizer'])
 
 # manage optimizer wrapper
 OPTIM_WRAPPERS = Registry(
     'optim_wrapper',
     parent=MMENGINE_OPTIM_WRAPPERS,
-    locations=['mmengine_template.engine.optim_wrapper'])
+    locations=['rssam.engine.optim_wrapper'])
 
 # manage constructors that customize the optimization hyperparameters.
 OPTIM_WRAPPER_CONSTRUCTORS = Registry(
     'optimizer constructor',
     parent=MMENGINE_OPTIM_WRAPPER_CONSTRUCTORS,
-    locations=['mmengine_template.engine.optim_wrapper_constructor'])
+    locations=['rssam.engine.optim_wrapper_constructor'])
 # manage all kinds of parameter schedulers like `MultiStepLR`
 PARAM_SCHEDULERS = Registry(
     'parameter scheduler',
     parent=MMENGINE_PARAM_SCHEDULERS,
-    locations=['mmengine_template.engine.scheduler'])
+    locations=['rssam.engine.scheduler'])
 # manage all kinds of metrics
 METRICS = Registry(
     'metric',
     parent=MMENGINE_METRICS,
-    locations=['mmengine_template.evaluation'])
+    locations=['rssam.evaluation'])
 # manage evaluator
 EVALUATOR = Registry(
     'evaluator',
     parent=MMENGINE_EVALUATOR,
-    locations=['mmengine_template.evaluation'])
+    locations=['rssam.evaluation'])
 
-# NOTE: mmengine_template does not define less commomly customized
+# NOTE: rssam does not define less commomly customized
 # modules below, therefore locations are not specified for Registry.
 
 # manage task-specific modules like anchor generators and box coders
