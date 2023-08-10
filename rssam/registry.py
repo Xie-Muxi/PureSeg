@@ -53,8 +53,11 @@ TRANSFORMS = Registry(
     locations=['rssam.datasets.transform'])
 
 # manage all kinds of modules inheriting `nn.Module`
+# MODELS = Registry(
+#     'model', parent=MMENGINE_MODELS, locations=['rssam.models'])
+
 MODELS = Registry(
-    'model', parent=MMENGINE_MODELS, locations=['rssam.models'])
+    'model', locations=['rssam.models'])
 
 # manage all kinds of model wrappers like 'MMDistributedDataParallel'
 MODEL_WRAPPERS = Registry(

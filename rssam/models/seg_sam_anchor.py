@@ -7,6 +7,7 @@ from mmengine.model.base_model import BaseModel
 # import torch.nn.functional as F
 from .sam import sam_model_registry
 
+# from rssam.registry import MODELS
 from rssam.registry import MODELS
 
 @MODELS.register_module()
