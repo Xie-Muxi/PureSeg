@@ -84,9 +84,9 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 prompt_shape = (60, 4)
 
-# from rssam.models import SegSAMAnchor
+from rssam.models import SegSAMAnchor
 model = dict(
-    type='SegSAMAnchor',
+    type=SegSAMAnchor,
     # hyperparameters=dict(
     #     optimizer=optimizer,
     #     param_scheduler=param_scheduler,
