@@ -1,12 +1,12 @@
 # custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_imports=False)
 
-custom_imports = dict(imports=['rssam.datasets', 'rssam.models'], allow_failed_imports=False)
+# custom_imports = dict(imports=['rssam.datasets', 'rssam.models'], allow_failed_imports=False)
 
 
 # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
-default_scope = 'rssam'
+# default_scope = 'rssam'
 
 sub_model_train = [
     'panoptic_head',
@@ -84,17 +84,17 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 prompt_shape = (60, 4)
 
-from rssam.models import SegSAMAnchor, SAMAnchorInstanceHead, SAMAggregatorNeck
+from mmdet.models import SegSAMAnchor, SAMAnchorInstanceHead, SAMAggregatorNeck, SAMAnchorPromptRoIHead
 # from mmdet.models.dense_heads import rpn_head
 import mmdet
 
 model = dict(
     type=SegSAMAnchor,
-    # hyperparameters=dict(
-    #     optimizer=optimizer,
-    #     param_scheduler=param_scheduler,
-    #     evaluator=evaluator,
-    # ),
+    hyperparameters=dict(
+        optimizer=optimizer,
+        param_scheduler=param_scheduler,
+        evaluator=evaluator,
+    ),
     need_train_names=sub_model_train,
     data_preprocessor=data_preprocessor,
     backbone=dict(
@@ -134,7 +134,7 @@ model = dict(
                 type='mmdet.CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
             loss_bbox=dict(type='mmdet.SmoothL1Loss', loss_weight=1.0)),
         roi_head=dict(
-            type='SAMAnchorPromptRoIHead',
+            type=SAMAnchorPromptRoIHead,
             bbox_roi_extractor=dict(
                 type='mmdet.SingleRoIExtractor',
                 roi_layer=dict(type='RoIAlign', output_size=7, sampling_ratio=0),
