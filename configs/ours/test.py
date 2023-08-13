@@ -84,7 +84,10 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 prompt_shape = (60, 4)
 
-from rssam.models import SegSAMAnchor
+from rssam.models import SegSAMAnchor, SAMAnchorInstanceHead, SAMAggregatorNeck
+# from mmdet.models.dense_heads import rpn_head
+import mmdet
+
 model = dict(
     type=SegSAMAnchor,
     # hyperparameters=dict(
@@ -100,10 +103,11 @@ model = dict(
         # type='vit_b',
         # checkpoint='pretrain/sam/sam_vit_b_01ec64.pth',
     ),
+    
     panoptic_head=dict(
-        type='SAMAnchorInstanceHead',
+        type=SAMAnchorInstanceHead,
         neck=dict(
-            type='SAMAggregatorNeck',
+            type=SAMAggregatorNeck,
             in_channels=[1280] * 32,
             # in_channels=[768] * 12,
             inner_channels=32,
@@ -113,7 +117,8 @@ model = dict(
             up_sample_scale=4,
         ),
         rpn_head=dict(
-            type='mmdet.RPNHead',
+            type=mmdet.models.RPNHead,
+            # type='mmdet.RPNHead',
             in_channels=256,
             feat_channels=256,
             anchor_generator=dict(
@@ -230,7 +235,7 @@ logger = dict(
 # vis_backends = [dict(type='LocalVisBackend'), dict(type='WandBVisBackend')]
 # visualizer = dict(vis_backends=vis_backends)
 
-visualizer = dict(type='Visualizer', vis_backends=[dict(type='WandbVisBackend')])
+# visualizer = dict(type='Visualizer', vis_backends=[dict(type='WandbVisBackend')])
 
 callbacks = [
     param_scheduler_callback,
