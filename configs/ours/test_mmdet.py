@@ -12,8 +12,8 @@ custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_i
 
 
 
-default_scope = 'rssam'
-# default_scope = 'mmdet'
+# default_scope = 'rssam'
+default_scope = 'mmdet'
 
 sub_model_train = [
     'panoptic_head',
@@ -322,9 +322,9 @@ train_cfg = dict(
 
 backend_args = None
 train_pipeline = [
-    dict(type='mmdet.LoadImageFromFile'),
-    dict(type='mmdet.LoadAnnotations', with_bbox=True, with_mask=True),
-    dict(type='mmdet.Resize', scale=image_size),
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
+    dict(type='Resize', scale=image_size),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.PackDetInputs')
 ]
@@ -351,7 +351,7 @@ data_parent = '/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset'
 train_data_prefix = ''
 val_data_prefix = ''
 
-from rssam.datasets import NWPUInsSegDataset
+from mmdet.datasets import NWPUInsSegDataset
 dataset_type = NWPUInsSegDataset
 
 val_loader = dict(
@@ -399,7 +399,7 @@ train_dataloader = dict(
     num_workers=train_num_workers,
     persistent_workers=persistent_workers,
     dataset=dict(
-    type='rssam.NWPUInsSegDataset',
+    type='NWPUInsSegDataset',
     data_root=data_parent,
     ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_train.json',
     data_prefix=dict(img='positive image set'),

@@ -50,7 +50,7 @@ DATASETS = Registry(
 TRANSFORMS = Registry(
     'transform',
     parent=MMENGINE_TRANSFORMS,
-    locations=['rssam.datasets.transform'])
+    locations=['rssam.datasets.transforms'])
 
 # manage all kinds of modules inheriting `nn.Module`
 # MODELS = Registry(
@@ -86,7 +86,7 @@ OPTIM_WRAPPERS = Registry(
 OPTIM_WRAPPER_CONSTRUCTORS = Registry(
     'optimizer constructor',
     parent=MMENGINE_OPTIM_WRAPPER_CONSTRUCTORS,
-    locations=['rssam.engine.optim_wrapper_constructor'])
+    locations=['rssam.engine.optimizers'])
 # manage all kinds of parameter schedulers like `MultiStepLR`
 PARAM_SCHEDULERS = Registry(
     'parameter scheduler',
