@@ -1,12 +1,19 @@
-# custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_imports=False)
+custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_imports=False)
 
-custom_imports = dict(imports=['rssam.datasets', 'rssam.models'], allow_failed_imports=False)
+# custom_imports = dict(imports=['rssam.datasets', 'rssam.models'], allow_failed_imports=False)
 
 
 # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
+# _base_ = [
+#     '../_base_/default_runtime.py'
+# ]
+
+
+
 default_scope = 'rssam'
+# default_scope = 'mmdet'
 
 sub_model_train = [
     'panoptic_head',
@@ -28,7 +35,13 @@ max_epochs = 100
 # )
 
 optimizer = dict(type='AdamW', lr=0.0005, momentum=0.9, weight_decay=0.001)
-optim_wrapper = dict(optimizer=optimizer)
+# optim_wrapper = dict(optimizer=optimizer)
+
+
+optim_wrapper = dict(
+    type='AmpOptimWrapper',
+    optimizer=dict(
+        type='SGD', lr=0.02 * 4, momentum=0.9, weight_decay=0.00004))
 
 
 
@@ -56,15 +69,16 @@ param_scheduler_callback = dict(
     type='ParamSchedulerHook'
 )
 
-evaluator_ = dict(
-    type='CocoPLMetric',
-    metric=['bbox', 'segm'],
-    proposal_nums=[1, 10, 100]
-)
+# from mmdet.evaluation import CocoMetric
+# evaluator_ = dict(
+#     type=CocoMetric,
+#     metric=['bbox', 'segm'],
+#     proposal_nums=[1, 10, 100]
+# )
 
-evaluator = dict(
-    val_evaluator=evaluator_,
-)
+# evaluator = dict(
+#     val_evaluator=evaluator_,
+# )
 
 
 image_size = (1024, 1024)
@@ -84,9 +98,14 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 prompt_shape = (60, 4)
 
-# from rssam.models import SegSAMAnchor
+from mmdet.models import SegSAMAnchor, SAMAnchorInstanceHead, SAMAggregatorNeck, SAMAnchorPromptRoIHead
+# from mmdet.models.dense_heads import rpn_head
+import mmdet
+
+from mmdet.models.task_modules.assigners import MaxIoUAssigner
+
 model = dict(
-    type='SegSAMAnchor',
+    type=SegSAMAnchor,
     # hyperparameters=dict(
     #     optimizer=optimizer,
     #     param_scheduler=param_scheduler,
@@ -96,14 +115,15 @@ model = dict(
     data_preprocessor=data_preprocessor,
     backbone=dict(
         type='vit_h',
-        checkpoint='pretrain/sam/sam_vit_h_4b8939.pth',
+        checkpoint='/nfs/home/3002_hehui/xmx/pretrain/sam/sam_vit_h_4b8939.pth',
         # type='vit_b',
         # checkpoint='pretrain/sam/sam_vit_b_01ec64.pth',
     ),
+    
     panoptic_head=dict(
-        type='SAMAnchorInstanceHead',
+        type=SAMAnchorInstanceHead,
         neck=dict(
-            type='SAMAggregatorNeck',
+            type=SAMAggregatorNeck,
             in_channels=[1280] * 32,
             # in_channels=[768] * 12,
             inner_channels=32,
@@ -113,7 +133,8 @@ model = dict(
             up_sample_scale=4,
         ),
         rpn_head=dict(
-            type='mmdet.RPNHead',
+            type=mmdet.models.RPNHead,
+            # type='mmdet.RPNHead',
             in_channels=256,
             feat_channels=256,
             anchor_generator=dict(
@@ -129,7 +150,7 @@ model = dict(
                 type='mmdet.CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
             loss_bbox=dict(type='mmdet.SmoothL1Loss', loss_weight=1.0)),
         roi_head=dict(
-            type='SAMAnchorPromptRoIHead',
+            type=SAMAnchorPromptRoIHead,
             bbox_roi_extractor=dict(
                 type='mmdet.SingleRoIExtractor',
                 roi_layer=dict(type='RoIAlign', output_size=7, sampling_ratio=0),
@@ -160,26 +181,27 @@ model = dict(
                 with_sincos=True,
                 class_agnostic=True,
                 loss_mask=dict(
-                    type='mmdet.CrossEntropyLoss', use_mask=True, loss_weight=1.0))),
+                    type='CrossEntropyLoss', use_mask=True, loss_weight=1.0))),
         # model training and testing settings
         train_cfg=dict(
-            rpn=dict(
-                assigner=dict(
-                    type='mmdet.MaxIoUAssigner',
-                    pos_iou_thr=0.7,
-                    neg_iou_thr=0.3,
-                    min_pos_iou=0.3,
-                    match_low_quality=True,
-                    ignore_iof_thr=-1),
-                sampler=dict(
-                    type='mmdet.RandomSampler',
-                    num=512,
-                    pos_fraction=0.5,
-                    neg_pos_ub=-1,
-                    add_gt_as_proposals=False),
-                allowed_border=-1,
-                pos_weight=-1,
-                debug=False),
+
+        rpn=dict(
+            assigner=dict(
+                type=MaxIoUAssigner,
+                pos_iou_thr=0.7,
+                neg_iou_thr=0.3,
+                min_pos_iou=0.3,
+                match_low_quality=True,
+                ignore_iof_thr=-1),
+        sampler=dict(
+                type='mmdet.RandomSampler',
+                num=256,
+                pos_fraction=0.5,
+                neg_pos_ub=-1,
+                add_gt_as_proposals=False),
+            allowed_border=0,
+            pos_weight=-1,
+            debug=False),
             rpn_proposal=dict(
                 nms_pre=2000,
                 max_per_img=1000,
@@ -230,7 +252,7 @@ logger = dict(
 # vis_backends = [dict(type='LocalVisBackend'), dict(type='WandBVisBackend')]
 # visualizer = dict(vis_backends=vis_backends)
 
-visualizer = dict(type='Visualizer', vis_backends=[dict(type='WandbVisBackend')])
+# visualizer = dict(type='Visualizer', vis_backends=[dict(type='WandbVisBackend')])
 
 callbacks = [
     param_scheduler_callback,
@@ -251,22 +273,25 @@ callbacks = [
 
 
 train_cfg = dict(
-    compiled_model=False,
-    accelerator="auto",
-    strategy="auto",
+    by_epoch=True,
+    val_interval=5,
+    max_epochs=max_epochs,
+    # compiled_model=False,
+    # accelerator="auto",
+    # strategy="auto",
     # strategy="ddp",
     # strategy='ddp_find_unused_parameters_true',
     # precision='32',
     # precision='16-mixed',
-    devices=1,
-    default_root_dir=f'results/{task_name}/{exp_name}',
+    # devices=1,
+    # default_root_dir=f'results/{task_name}/{exp_name}',
     # default_root_dir='results/tmp',
-    max_epochs=max_epochs,
-    logger=logger,
-    callbacks=callbacks,
-    log_every_n_steps=5,
-    check_val_every_n_epoch=5,
-    benchmark=True,
+    # max_epochs=max_epochs,
+    # logger=logger,
+    # callbacks=callbacks,
+    # log_every_n_steps=5,
+    # check_val_every_n_epoch=5,
+    # benchmark=True,
     # sync_batchnorm=True,
     # fast_dev_run=True,
 
@@ -286,7 +311,7 @@ train_cfg = dict(
     # gradient_clip_algorithm='norm',
     # deterministic=None,
     # inference_mode: bool=True,
-    use_distributed_sampler=True,
+    # use_distributed_sampler=True,
     # profiler="simple",
     # detect_anomaly=False,
     # barebones=False,
@@ -325,7 +350,9 @@ persistent_workers = True
 data_parent = '/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset'
 train_data_prefix = ''
 val_data_prefix = ''
-dataset_type = 'NWPUInsSegDataset'
+
+from rssam.datasets import NWPUInsSegDataset
+dataset_type = NWPUInsSegDataset
 
 val_loader = dict(
         batch_size=test_batch_size_per_gpu,
@@ -342,26 +369,26 @@ val_loader = dict(
             pipeline=test_pipeline,
             backend_args=backend_args))
 
-datamodule_cfg = dict(
-    type='PLDataModule',
-    train_loader=dict(
-        batch_size=train_batch_size_per_gpu,
-        num_workers=train_num_workers,
-        persistent_workers=persistent_workers,
-        pin_memory=True,
-        dataset=dict(
-            type=dataset_type,
-            data_root=data_parent,
-            ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_train.json',
-            data_prefix=dict(img='positive image set'),
-            filter_cfg=dict(filter_empty_gt=True, min_size=32),
-            pipeline=train_pipeline,
-            backend_args=backend_args)
-    ),
-    val_loader=val_loader,
-    # test_loader=val_loader
-    predict_loader=val_loader
-)
+# datamodule_cfg = dict(
+#     type='PLDataModule',
+#     train_loader=dict(
+#         batch_size=train_batch_size_per_gpu,
+#         num_workers=train_num_workers,
+#         persistent_workers=persistent_workers,
+#         pin_memory=True,
+#         dataset=dict(
+#             type=dataset_type,
+#             data_root=data_parent,
+#             ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_train.json',
+#             data_prefix=dict(img='positive image set'),
+#             filter_cfg=dict(filter_empty_gt=True, min_size=32),
+#             pipeline=train_pipeline,
+#             backend_args=backend_args)
+#     ),
+#     val_loader=val_loader,
+#     # test_loader=val_loader
+#     predict_loader=val_loader
+# )
 
 # from rssam.datasets import NWPUInsSegDataset
 
@@ -372,7 +399,7 @@ train_dataloader = dict(
     num_workers=train_num_workers,
     persistent_workers=persistent_workers,
     dataset=dict(
-    type='NWPUInsSegDataset',
+    type='rssam.NWPUInsSegDataset',
     data_root=data_parent,
     ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_train.json',
     data_prefix=dict(img='positive image set'),

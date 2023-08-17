@@ -3,4 +3,4 @@ from .transforms import CustomTransform
 
 from .nwpu import NWPUInsSegDataset
 
-__all__ = ['CustomDataset', 'CustomTransform']
+__all__ = ['CustomDataset', 'CustomTransform','NWPUInsSegDataset']
