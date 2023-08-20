@@ -96,7 +96,8 @@ from mmengine.visualization import LocalVisBackend
 from mmdet.engine.hooks import DetVisualizationHook
 from mmdet.visualization import DetLocalVisualizer
 
-default_scope = None
+# default_scope = None
+default_scope = 'mmdet'
 
 # default_hooks = dict(
 #     timer=dict(type=IterTimerHook),
@@ -312,8 +313,10 @@ train_dataloader = dict(
         type=CocoPanopticDataset,
         data_root=data_root,
         ann_file='annotations/panoptic_train2017.json',
+        # data_prefix=dict(
+        #     img='train2017/', seg='annotations/panoptic_train2017/'),
         data_prefix=dict(
-            img='train2017/', seg='annotations/panoptic_train2017/'),
+            img='train2017/', seg='train2017/'),
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=train_pipeline,
         backend_args=backend_args))

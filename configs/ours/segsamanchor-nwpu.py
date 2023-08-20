@@ -12,8 +12,8 @@ custom_imports = dict(imports=['mmseg.datasets', 'mmseg.models'], allow_failed_i
 
 
 
-# default_scope = 'rssam'
-default_scope = 'mmdet'
+default_scope = 'rssam'
+# default_scope = 'mmdet'
 
 sub_model_train = [
     'panoptic_head',
@@ -38,16 +38,11 @@ optimizer = dict(type='AdamW', lr=0.0005, momentum=0.9, weight_decay=0.001)
 # optim_wrapper = dict(optimizer=optimizer)
 
 
-# optim_wrapper = dict(
-#     type='AmpOptimWrapper',
-#     optimizer=dict(
-#         type='SGD', lr=0.02 * 4, momentum=0.9, weight_decay=0.00004))
-
 optim_wrapper = dict(
-    type='OptimWrapper',
-    # optimizer=dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-    optimizer=dict(type='Adam', lr=0.0005, weight_decay=0.0001)
-)
+    type='AmpOptimWrapper',
+    optimizer=dict(
+        type='SGD', lr=0.02 * 4, momentum=0.9, weight_decay=0.00004))
+
 
 
 param_scheduler = [
@@ -327,9 +322,9 @@ train_cfg = dict(
 
 backend_args = None
 train_pipeline = [
-    dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
-    dict(type='Resize', scale=image_size),
+    dict(type='mmdet.LoadImageFromFile'),
+    dict(type='mmdet.LoadAnnotations', with_bbox=True, with_mask=True),
+    dict(type='mmdet.Resize', scale=image_size),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.PackDetInputs')
 ]
@@ -356,7 +351,7 @@ data_parent = '/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset'
 train_data_prefix = ''
 val_data_prefix = ''
 
-from mmdet.datasets import NWPUInsSegDataset
+from rssam.datasets import NWPUInsSegDataset
 dataset_type = NWPUInsSegDataset
 
 val_loader = dict(
@@ -404,7 +399,7 @@ train_dataloader = dict(
     num_workers=train_num_workers,
     persistent_workers=persistent_workers,
     dataset=dict(
-    type='NWPUInsSegDataset',
+    type='rssam.NWPUInsSegDataset',
     data_root=data_parent,
     ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_train.json',
     data_prefix=dict(img='positive image set'),
@@ -451,7 +446,7 @@ data_root = data_parent
 
 # CocoMetric
 from mmdet.evaluation.metrics import CocoMetric
-from mmpl.evaluation.metrics import CocoPLMetric
+
 val_evaluator = dict(
     type=CocoMetric,
     ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_val.json',
@@ -459,13 +454,6 @@ val_evaluator = dict(
     format_only=False,
     backend_args=backend_args)
 test_evaluator = val_evaluator
-
-
-# evaluator_ = dict(
-#         type='CocoPLMetric',
-#         metric=['bbox', 'segm'],
-#         proposal_nums=[1, 10, 100]
-# )
 
 
 val_cfg = dict(type='ValLoop')
@@ -477,5 +465,3 @@ env_cfg = dict(
     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0),
     dist_cfg=dict(backend='nccl'),
 )
-
-
