@@ -11,7 +11,8 @@ from mmcv.cnn.bricks.transformer import build_transformer_layer
 from torch import Tensor
 
 from mmdet.models import SinePositionalEncoding
-from mmpl.registry import MODELS
+# from mmpl.registry import MODELS
+from mmdet.registry import MODELS
 # from mmdet.registry import MODELS
 import torch.nn.functional as F
 

@@ -1,5 +1,5 @@
 # define scope here.
-default_scope = 'rssam'
+default_scope = 'rsseg'
 
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),

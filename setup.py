@@ -14,7 +14,7 @@ def readme():
     return content
 
 
-version_file = 'rssam/version.py'
+version_file = 'rsseg/version.py'
 
 
 def get_version():
@@ -125,7 +125,7 @@ def add_mim_extension():
 
     filenames = ['tools', 'configs', 'demo', 'model-index.yml']
     repo_path = osp.dirname(__file__)
-    mim_path = osp.join(repo_path, 'rssam', '.mim')
+    mim_path = osp.join(repo_path, 'rsseg', '.mim')
     os.makedirs(mim_path, exist_ok=True)
 
     for filename in filenames:
@@ -155,7 +155,7 @@ def add_mim_extension():
 if __name__ == '__main__':
     add_mim_extension()
     setup(
-        name='rssam',
+        name='rsseg',
         version=get_version(),
         description='MMEngine Template',
         long_description=readme(),
@@ -163,7 +163,7 @@ if __name__ == '__main__':
         author='{author name}',
         author_email='{your email}',
         keywords='mmengine, template',
-        url='https://github.com/Xie-Muxi/pure-seg',
+        url='https://github.com/user_name/mmengine_template',
         packages=find_packages(exclude=('configs', 'tools', 'demo')),
         include_package_data=True,
         classifiers=[

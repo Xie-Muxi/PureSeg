@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 
-from mmpl.registry import MODELS
+# from mmpl.registry import MODELS
+from mmdet.registry import MODELS
 from mmengine.model import BaseModule
 
 

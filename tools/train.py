@@ -11,7 +11,7 @@ from mmengine.runner import Runner
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
-    parser.add_argument('--config', help='train config file path')
+    parser.add_argument('config', help='train config file path')
     parser.add_argument('--work-dir', help='the dir to save logs and models')
     parser.add_argument(
         '--amp',
@@ -41,7 +41,7 @@ def parse_args():
         choices=['none', 'pytorch', 'slurm', 'mpi'],
         default='none',
         help='job launcher')
-    parser.add_argument('--local_rank', type=int, default=0)
+    parser.add_argument('--local_rank', '--local-rank', type=int, default=0)
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
@@ -69,14 +69,14 @@ def main():
 
     # enable automatic-mixed-precision training
     if args.amp is True:
-        optim_wrapper = cfg.optim_wrapper.type
+        optim_wrapper = cfg.optim_wrapper.get('type', None)
         if optim_wrapper == 'AmpOptimWrapper':
             print_log(
                 'AMP training is already enabled in your config.',
                 logger='current',
                 level=logging.WARNING)
         else:
-            assert optim_wrapper == 'OptimWrapper', (
+            assert optim_wrapper == 'OptimWrapper' or optim_wrapper is None, (
                 '`--amp` is only supported when the optimizer wrapper type is '
                 f'`OptimWrapper` but got {optim_wrapper}.')
             cfg.optim_wrapper.type = 'AmpOptimWrapper'
