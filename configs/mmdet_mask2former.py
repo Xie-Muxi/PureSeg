@@ -323,7 +323,7 @@ train_dataloader = dict(
 
 val_evaluator = [
     dict(
-        type='CocoPanopticMetric',
+        type=CocoPanopticMetric,
         ann_file=data_root + 'annotations/panoptic_val2017.json',
         seg_prefix=data_root + 'annotations/panoptic_val2017/',
         # backend_args={{_base_.backend_args}},

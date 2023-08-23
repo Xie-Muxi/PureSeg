@@ -189,7 +189,7 @@ data_root = '/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset'
 
 train_dataloader = dict(
     batch_size=2,
-    num_workers=2,
+    num_workers=12,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     batch_sampler=dict(type='AspectRatioBatchSampler'),
@@ -220,8 +220,8 @@ train_dataloader = dict(
 #         backend_args=backend_args))
 
 val_dataloader = dict(
-    batch_size=1,
-    num_workers=2,
+    batch_size=2,
+    num_workers=12,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -252,10 +252,15 @@ from mmdet.evaluation.metrics import CocoMetric
 #     type='CocoPLMetric'
 # )
 
-
+from mmdet.evaluation.metrics import CocoPLMetric
+val_evaluator = dict(
+    type=CocoPLMetric,
+    ann_file='/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset/nwpu-instances_val.json',
+    metric=['bbox', 'segm'],
+    format_only=False,
+    proposal_nums=[1,10,100],
+)
 test_evaluator = val_evaluator
-
-
 
 
 # ----- schedule_1x.py -----
@@ -310,10 +315,20 @@ env_cfg = dict(
 )
 
 # vis_backends = [dict(type='LocalVisBackend')]
-vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
+vis_backends = [
+    dict(type='LocalVisBackend'), 
+    dict(
+    type='WandbVisBackend',
+    init_kwargs=dict(
+        name='mask-rcnn_sam-h_fpn_1x-wandb_nwpu_pl-metric',
+        project='mmdetection-tools'
+        )
+        )]
+
 visualizer = dict(
     type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
+
 
 log_level = 'INFO'
 load_from = None

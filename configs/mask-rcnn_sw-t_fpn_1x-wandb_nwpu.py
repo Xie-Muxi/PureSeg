@@ -14,26 +14,6 @@ model = dict(
         pad_mask=True,
         pad_size_divisor=32),
 
-    # backbone=dict(
-    #     type='ResNet',
-    #     depth=50,
-    #     num_stages=4,
-    #     out_indices=(0, 1, 2, 3),
-    #     frozen_stages=1,
-    #     norm_cfg=dict(type='BN', requires_grad=True),
-    #     norm_eval=True,
-    #     style='pytorch',
-    #     init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
-    # backbone=dict(
-    #     # _delete_=True, # 将 _base_ 中关于 backbone 的字段删除
-    #     type='mmpretrain.MobileNetV3', # 使用 mmpretrain 中的 MobileNetV3
-    #     arch='small',
-    #     out_indices=(0, 1, 2, 3), # 修改 out_indices
-    #     init_cfg=dict(
-    #         type='Pretrained',
-    #         checkpoint=pretrained,
-    #         prefix='backbone.')),
-
     backbone=dict(
         # _delete_=True,
         type='SwinTransformer',
@@ -314,7 +294,7 @@ env_cfg = dict(
 )
 
 # vis_backends = [dict(type='LocalVisBackend')]
-vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
+vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend',init_kwargs=dict(name='mask-rcnn_sw-t_fpn_1x-wandb_nwpu'))]
 visualizer = dict(
     type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)

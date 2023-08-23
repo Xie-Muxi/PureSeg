@@ -2,7 +2,8 @@ import copy
 
 import torch
 import torch.nn as nn
-from mmpl.registry import MODELS
+# from mmpl.registry import MODELS
+from mmdet.registry import MODELS
 from mmengine.model import BaseModule
 from mmcv.cnn.bricks.transformer import build_transformer_layer
 

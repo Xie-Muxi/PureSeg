@@ -2,7 +2,8 @@ import torch.nn as nn
 from mmengine.model import BaseModule
 from mmengine.model.weight_init import constant_init
 from mmengine.utils.dl_utils.parrots_wrapper import _BatchNorm
-from mmpl.registry import MODELS
+# from mmpl.registry import MODELS
+from mmdet.registry import MODELS
 from mmengine.model import BaseModule
 from transformers import GPT2Model, GPT2Config
 
