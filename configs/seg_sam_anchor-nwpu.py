@@ -346,9 +346,9 @@ test_pipeline = [
 ]
 
 
-train_batch_size_per_gpu = 4
+train_batch_size_per_gpu = 6
 train_num_workers = 12
-test_batch_size_per_gpu = 4
+test_batch_size_per_gpu = 6
 test_num_workers = 12
 persistent_workers = True
 
@@ -473,3 +473,5 @@ env_cfg = dict(
 
 # optimizer_config=dict(find_unused_parameters = True)
 find_unused_parameters = True
+
+default_hooks = dict(checkpoint=dict(type='CheckpointHook', interval=5))

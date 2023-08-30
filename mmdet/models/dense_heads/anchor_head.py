@@ -360,6 +360,7 @@ class AnchorHead(BaseDenseHead):
         """
         num_imgs = len(batch_img_metas)
         assert len(anchor_list) == len(valid_flag_list) == num_imgs
+        
 
         if batch_gt_instances_ignore is None:
             batch_gt_instances_ignore = [None] * num_imgs
