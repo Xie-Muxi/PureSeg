@@ -1,13 +1,27 @@
-
-# runtime settings
 max_epochs = 300
 
+# ----- mask-rcnn_r50_fpn.py ------
 # model settings
+
 # backbone
 custom_imports = dict(imports=['mmpretrain.models'], allow_failed_imports=False)
 # pretrained = '/nfs/home/3002_hehui/xmx/pretrain/sam/sam_vit_h_4b8939.pth'
-pretrained ='https://download.openmmlab.com/mmpretrain/v1.0/dinov2/vit-base-p14_dinov2-pre_3rdparty_20230426-ba246503.pth'
-
+pretrained ='https://download.openmmlab.com/mmclassification/v1/vit_sam/vit-huge-p16_sam-pre_3rdparty_sa1b-1024px_20230411-3f13c653.pth'
+# model = dict(
+#     type='ImageClassifier',
+#     backbone=dict(
+#         type='ViTSAM',
+#         arch='huge',
+#         img_size=1024,
+#         patch_size=16,
+#         out_channels=256,
+#         use_abs_pos=True,
+#         use_rel_pos=True,
+#         window_size=14,
+#     ),
+#     neck=None,
+#     head=None,
+# )
 
 model = dict(
     type='MaskRCNN',
@@ -19,40 +33,32 @@ model = dict(
         pad_mask=True,
         pad_size_divisor=32),
     # backbone=dict(
-    #     type='mmpretrain.ViTSAM',
-    #     arch='huge',
-    #     img_size=1024,
-    #     patch_size=16,
-    #     out_channels=256,
-    #     use_abs_pos=True,
-    #     use_rel_pos=True,
-    #     window_size=14,
-    #     # num_stages=4,
+    #     type='ResNet',
+    #     depth=50,
+    #     num_stages=4,
     #     out_indices=(0, 1, 2, 3),
-    #     init_cfg=dict(
-    #         type='Pretrained',
-    #         checkpoint=pretrained,
-    #         prefix='backbone.',
-    #     )
-    # ),
+    #     frozen_stages=1,
+    #     norm_cfg=dict(type='BN', requires_grad=True),
+    #     norm_eval=True,
+    #     style='pytorch',
+    #     init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
     backbone=dict(
         type='mmpretrain.VisionTransformer',
-        arch='base',
+        arch='dinov2-giant',
+        img_size=518,
+        patch_size=14,
         # out_indices=(0, 1, 2, 3),
-        img_size=1024,
-        patch_size=16,
         layer_scale_init_value=1e-5,
+        layer_cfgs=dict(ffn_type='swiglu_fused'),
         init_cfg=dict(
             type='Pretrained',
             checkpoint=pretrained,
             prefix='backbone.',
         )
     ),
-
     neck=dict(
         type='FPN',
-        # in_channels=[256, 512, 1024, 2048],
-        in_channels=[256],
+        in_channels=[256, 512, 1024, 2048],
         # in_channels=[256, 256, 256, 256],
         out_channels=256,
         num_outs=5),
@@ -214,8 +220,7 @@ train_dataloader = dict(
         data_prefix=dict(img='positive image set'),
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=train_pipeline,
-        backend_args=backend_args)
-)
+        backend_args=backend_args))
 
 
 # val_dataloader = dict(
@@ -314,7 +319,8 @@ env_cfg = dict(
 )
 
 # vis_backends = [dict(type='LocalVisBackend')]
-vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
+# vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
+vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend',init_kwargs=dict(name='mask-rcnn_sam-h_fpn-nwpu'))]
 visualizer = dict(
     type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
@@ -336,6 +342,4 @@ resume = False
 # train_cfg = dict(val_interval=2)
 # _base_.train_cfg.val_interval = 2
 
-
-# optimizer_config=dict(find_unused_parameters = True)
 find_unused_parameters = True
