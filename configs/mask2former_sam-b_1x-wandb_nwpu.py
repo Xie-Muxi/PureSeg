@@ -1,3 +1,4 @@
+
 # runtime settings
 max_epochs = 500
 batch_size = 8
@@ -21,34 +22,49 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 num_queries = 60
 
-pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth'  # noqa
-depths = [2, 2, 6, 2]
+
+pretrained = 'https://download.openmmlab.com/mmclassification/v1/vit_sam/vit-base-p16_sam-pre_3rdparty_sa1b-1024px_20230411-2320f9cc.pth'
+
 model = dict(
     type='Mask2Former',
     data_preprocessor=data_preprocessor,
     
+    # backbone=dict(
+    #     # _delete_=True,
+    #     type='mmpretrain.ConvNeXt',
+    #     arch='tiny',
+    #     out_indices=[0, 1, 2, 3],
+    #     drop_path_rate=0.4,
+    #     layer_scale_init_value=0.,
+    #     use_grn=True,
+    #     gap_before_final_norm=False,
+    #     init_cfg=dict(
+    #         type='Pretrained', checkpoint=checkpoint_file,
+    #         prefix='backbone.')),
+    
     backbone=dict(
-        type='SwinTransformer',
-        embed_dims=96,
-        depths=depths,
-        num_heads=[3, 6, 12, 24],
-        window_size=7,
-        mlp_ratio=4,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.,
-        attn_drop_rate=0.,
-        drop_path_rate=0.3,
-        patch_norm=True,
+        type='mmpretrain.ViTSAM',
+        arch='base',
+        img_size=1024,
+        patch_size=16,
+        out_channels=256,
+        use_abs_pos=True,
+        use_rel_pos=True,
+        window_size=14,
+        # num_stages=4,
         out_indices=(0, 1, 2, 3),
-        with_cp=False,
-        convert_weights=True,
-        frozen_stages=-1,
-        init_cfg=dict(type='Pretrained', checkpoint=pretrained)),
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint=pretrained,
+            prefix='backbone.',
+        )
+    ),
+
     panoptic_head=dict(
         type='Mask2FormerHead',
         # in_channels=[256, 512, 1024, 2048],  # pass to pixel_decoder inside
-        in_channels=[96, 192, 384, 768], # pass to pixel_decoder inside
+        # in_channels=[96, 192, 384, 768], # pass to pixel_decoder inside
+        in_channels=[256, 256, 256, 256],
         strides=[4, 8, 16, 32],
         feat_channels=256,
         out_channels=256,
@@ -247,7 +263,6 @@ val_dataloader = dict(
         backend_args=backend_args)
 )
 
-
 test_dataloader = val_dataloader
 from mmdet.evaluation.metrics import CocoMetric
 val_evaluator = dict(
@@ -282,7 +297,8 @@ param_scheduler = [
 optim_wrapper = dict(
     type='OptimWrapper',
     # optimizer=dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-    optimizer=dict(type='Adam', lr=0.0005, weight_decay=0.0001)
+    # optimizer=dict(type='Adam', lr=0.005, weight_decay=0.0001)
+    optimizer=dict(type='Adam', lr=0.0001, weight_decay=0.0001)
 )
 
 # Default setting for scaling LR automatically
@@ -300,8 +316,7 @@ default_hooks = dict(
     timer=dict(type='IterTimerHook'),
     logger=dict(type='LoggerHook', interval=50),
     param_scheduler=dict(type='ParamSchedulerHook'),
-    # checkpoint=dict(type='CheckpointHook', interval=4,max_keep_ckpts=3),
-    checkpoint=dict(type='CheckpointHook',max_keep_ckpts=3),
+    checkpoint=dict(type='CheckpointHook',interval=1,max_keep_ckpts=3),
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='DetVisualizationHook'))
 
@@ -312,12 +327,16 @@ env_cfg = dict(
 )
 
 # vis_backends = [dict(type='LocalVisBackend')]
-vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend',init_kwargs=dict(project='pure-seg',name='mask2former_sw-t_nwpu'))]
+vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend',init_kwargs=dict(project='pure-seg',name='mask2former_sam-base_lr=0.001_nwpu_300e'))]
 visualizer = dict(
     type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 
 log_level = 'INFO'
-load_from = None
-resume = False
+# load_from = None
+# resume = False
+load_from = None  # 从给定路径加载模型检查点作为预训练模型。这不会恢复训练。
+resume = False  # 是否从 `load_from` 中定义的检查点恢复。 如果 `load_from` 为 None，它将恢复 `work_dir` 中的最新检查点。
+
+
 

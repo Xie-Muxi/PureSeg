@@ -1,12 +1,14 @@
-max_epochs = 500
 
-# ----- mask-rcnn_r50_fpn.py ------
+# runtime settings
+max_epochs = 100
+batch_size = 3
+
 # model settings
-
 # backbone
 custom_imports = dict(imports=['mmpretrain.models'], allow_failed_imports=False)
 # pretrained = '/nfs/home/3002_hehui/xmx/pretrain/sam/sam_vit_h_4b8939.pth'
 pretrained ='https://download.openmmlab.com/mmclassification/v1/vit_sam/vit-huge-p16_sam-pre_3rdparty_sa1b-1024px_20230411-3f13c653.pth'
+
 
 model = dict(
     type='MaskRCNN',
@@ -17,22 +19,13 @@ model = dict(
         bgr_to_rgb=True,
         pad_mask=True,
         pad_size_divisor=32),
-    # backbone=dict(
-    #     type='ResNet',
-    #     depth=50,
-    #     num_stages=4,
-    #     out_indices=(0, 1, 2, 3),
-    #     frozen_stages=1,
-    #     norm_cfg=dict(type='BN', requires_grad=True),
-    #     norm_eval=True,
-    #     style='pytorch',
-    #     init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
     backbone=dict(
         type='mmpretrain.ViTSAM',
         arch='huge',
         img_size=1024,
         patch_size=16,
-        out_channels=256,
+        # out_channels=256,
+        out_channels=512,
         use_abs_pos=True,
         use_rel_pos=True,
         window_size=14,
@@ -47,7 +40,9 @@ model = dict(
     neck=dict(
         type='FPN',
         # in_channels=[256, 512, 1024, 2048],
-        in_channels=[256, 256, 256, 256],
+        # in_channels=[256],
+        # in_channels=[256, 256, 256, 256],
+        in_channels=[512, 512, 512, 512],
         out_channels=256,
         num_outs=5),
     rpn_head=dict(
@@ -180,10 +175,24 @@ test_pipeline = [
 from mmdet.datasets import NWPUInsSegDataset
 dataset_type = NWPUInsSegDataset
 data_root = '/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset'
+# train_dataloader = dict(
+#     batch_size=2,
+#     num_workers=2,
+#     persistent_workers=True,
+#     sampler=dict(type='DefaultSampler', shuffle=True),
+#     batch_sampler=dict(type='AspectRatioBatchSampler'),
+#     dataset=dict(
+#         type=dataset_type,
+#         data_root=data_root,
+#         ann_file='annotations/instances_train2017.json',
+#         data_prefix=dict(img='train2017/'),
+#         filter_cfg=dict(filter_empty_gt=True, min_size=32),
+#         pipeline=train_pipeline,
+#         backend_args=backend_args))
 
 train_dataloader = dict(
-    batch_size=2,
-    num_workers=2,
+    batch_size=batch_size,
+    num_workers=12,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     batch_sampler=dict(type='AspectRatioBatchSampler'),
@@ -194,11 +203,28 @@ train_dataloader = dict(
         data_prefix=dict(img='positive image set'),
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=train_pipeline,
-        backend_args=backend_args))
+        backend_args=backend_args)
+)
+
+
+# val_dataloader = dict(
+#     batch_size=1,
+#     num_workers=2,
+#     persistent_workers=True,
+#     drop_last=False,
+#     sampler=dict(type='DefaultSampler', shuffle=False),
+#     dataset=dict(
+#         type=dataset_type,
+#         data_root=data_root,
+#         ann_file='annotations/instances_val2017.json',
+#         data_prefix=dict(img='val2017/'),
+#         test_mode=True,
+#         pipeline=test_pipeline,
+#         backend_args=backend_args))
 
 val_dataloader = dict(
-    batch_size=1,
-    num_workers=2,
+    batch_size=batch_size,
+    num_workers=12,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -223,7 +249,22 @@ val_evaluator = dict(
     metric=['bbox', 'segm'],
     format_only=False,
     backend_args=backend_args)
+
+# from rssam.evaluation
+# val_evaluator = dict(
+#     type='CocoPLMetric'
+# )
+
+# from mmdet.evaluation.metrics import CocoPLMetric
+# val_evaluator = dict(
+#     type=CocoPLMetric,
+#     ann_file='/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset/nwpu-instances_val.json',
+#     metric=['bbox', 'segm'],
+#     format_only=False,
+#     proposal_nums=[1,10,100],
+# )
 test_evaluator = val_evaluator
+
 
 # ----- schedule_1x.py -----
 # training schedule for 1x
@@ -248,14 +289,14 @@ param_scheduler = [
 optim_wrapper = dict(
     type='OptimWrapper',
     # optimizer=dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-    optimizer=dict(type='Adam', lr=0.0005, weight_decay=0.0001)
+    optimizer=dict(type='Adam', lr=0.005, weight_decay=0.0001)
 )
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=16)
+# auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 
 
@@ -266,7 +307,7 @@ default_hooks = dict(
     timer=dict(type='IterTimerHook'),
     logger=dict(type='LoggerHook', interval=50),
     param_scheduler=dict(type='ParamSchedulerHook'),
-    checkpoint=dict(type='CheckpointHook', interval=5),
+    checkpoint=dict(type='CheckpointHook', interval=1,max_keep_ckpts=3),
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='DetVisualizationHook'))
 
@@ -276,25 +317,40 @@ env_cfg = dict(
     dist_cfg=dict(backend='nccl'),
 )
 
+# vis_backends = [dict(type='LocalVisBackend')]
 vis_backends = [
+    dict(type='LocalVisBackend'), 
     dict(
-        type='LocalVisBackend'
-    ), 
-    dict(
-        type='WandbVisBackend',
-        init_kwargs=dict(
-            name='mask-rcnn_sam-h_fpn-nwpu',
-            project='pure-seg'
-    ),)
-    ]
+    type='WandbVisBackend',
+    init_kwargs=dict(
+        name='mask-rcnn_sam-h_fpn_1x-wandb_nwpu',
+        project='test'
+        )
+    )
+]
+
 visualizer = dict(
     type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 
-log_level = 'INFO'
-# load_from = None
-# resume = False
-# load_from = './work_dirs/mask-rcnn_sam-h_fpn_1x-wandb_nwpu/last_checkpoint'
-resume = True
 
+log_level = 'INFO'
+load_from = None
+resume = False
+
+
+# ------------- ------------
+# vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
+# visualizer = dict(vis_backends=vis_backends)
+
+# MMEngine support the following two ways, users can choose
+# according to convenience
+# default_hooks = dict(checkpoint=dict(interval=4))
+# _base_.default_hooks.checkpoint.interval = 4
+
+# train_cfg = dict(val_interval=2)
+# _base_.train_cfg.val_interval = 2
+
+
+# optimizer_config=dict(find_unused_parameters = True)
 find_unused_parameters = True

@@ -1,6 +1,6 @@
 
 # runtime settings
-max_epochs = 300
+max_epochs = 100
 
 # model settings
 # backbone
@@ -23,7 +23,8 @@ model = dict(
         arch='huge',
         img_size=1024,
         patch_size=16,
-        out_channels=256,
+        # out_channels=256,
+        out_channels=512,
         use_abs_pos=True,
         use_rel_pos=True,
         window_size=14,
@@ -39,7 +40,8 @@ model = dict(
         type='FPN',
         # in_channels=[256, 512, 1024, 2048],
         # in_channels=[256],
-        in_channels=[256, 256, 256, 256],
+        # in_channels=[256, 256, 256, 256],
+        in_channels=[512, 512, 512, 512],
         out_channels=256,
         num_outs=5),
     rpn_head=dict(
@@ -286,7 +288,7 @@ param_scheduler = [
 optim_wrapper = dict(
     type='OptimWrapper',
     # optimizer=dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-    optimizer=dict(type='Adam', lr=0.0005, weight_decay=0.0001)
+    optimizer=dict(type='Adam', lr=0.005, weight_decay=0.0001)
 )
 
 # Default setting for scaling LR automatically
@@ -321,7 +323,7 @@ vis_backends = [
     type='WandbVisBackend',
     init_kwargs=dict(
         name='mask-rcnn_sam-h_fpn_1x-wandb_nwpu_pl-metric',
-        project='mmdetection-tools'
+        project='test'
         )
         )]
 
