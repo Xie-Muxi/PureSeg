@@ -250,19 +250,6 @@ val_evaluator = dict(
     format_only=False,
     backend_args=backend_args)
 
-# from rssam.evaluation
-# val_evaluator = dict(
-#     type='CocoPLMetric'
-# )
-
-# from mmdet.evaluation.metrics import CocoPLMetric
-# val_evaluator = dict(
-#     type=CocoPLMetric,
-#     ann_file='/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset/nwpu-instances_val.json',
-#     metric=['bbox', 'segm'],
-#     format_only=False,
-#     proposal_nums=[1,10,100],
-# )
 test_evaluator = val_evaluator
 
 
@@ -275,7 +262,7 @@ test_cfg = dict(type='TestLoop')
 # learning rate
 param_scheduler = [
     dict(
-        type='LinearLR', start_factor=0.001, by_epoch=False, begin=0, end=500),
+        type='LinearLR', start_factor=0.001, by_epoch=False, begin=0, end=max_epochs),
     dict(
         type='MultiStepLR',
         begin=0,
