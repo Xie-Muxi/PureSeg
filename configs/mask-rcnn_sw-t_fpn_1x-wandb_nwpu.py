@@ -2,7 +2,16 @@
 custom_imports = dict(imports=['mmpretrain.models'], allow_failed_imports=False)
 pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth'  # noqa
 
-# ----- mask-rcnn_r50_fpn.py ------
+
+# dataset settings
+# data_root = '/nfs/home/3002_hehui/xmx/COCO2017/'
+backend_args = None
+num_things_classes = 10
+num_stuff_classes = 0
+num_classes = num_things_classes + num_stuff_classes
+num_queries = 60
+
+
 # model settings
 model = dict(
     type='MaskRCNN',
@@ -65,7 +74,7 @@ model = dict(
             in_channels=256,
             fc_out_channels=1024,
             roi_feat_size=7,
-            num_classes=80,
+            num_classes=num_classes,
             bbox_coder=dict(
                 type='DeltaXYWHBBoxCoder',
                 target_means=[0., 0., 0., 0.],
@@ -142,9 +151,7 @@ model = dict(
 
 
 # ----- coco_instance.py -----
-# dataset settings
-# data_root = '/nfs/home/3002_hehui/xmx/COCO2017/'
-backend_args = None
+
 
 train_pipeline = [
     dict(type='LoadImageFromFile', backend_args=backend_args),
