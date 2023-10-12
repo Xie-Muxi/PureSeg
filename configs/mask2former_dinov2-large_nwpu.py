@@ -1,3 +1,4 @@
+
 # runtime settings
 max_epochs = 300
 batch_size = 8
@@ -23,30 +24,26 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 num_queries = 60
 
-from mmpretrain.models.backbones import ViTEVA02
-
-checkpoint = 'https://download.openmmlab.com/mmpretrain/v1.0/eva02/eva02-tiny-p14_pre_in21k_20230505-d703e7b1.pth'  # noqa
+checkpoint_file = 'https://download.openmmlab.com/mmpretrain/v1.0/dinov2/vit-large-p14_dinov2-pre_3rdparty_20230426-f3302d9e.pth'  # noqa
 model = dict(
     type='Mask2Former',
     data_preprocessor=data_preprocessor,
+    
+    #! mmpretrain.models.backbones.vision_transformer
     backbone=dict(
-        type=ViTEVA02,
-        arch='tiny',
+        type='mmpretrain.VisionTransformer',
+        arch='large',
         img_size=image_size,
-        patch_size=14,
-        final_norm=False,
+        out_indices=[0, 1, 2, 3],
         out_type='featmap',
-        out_indices=(0, 1, 2, 3),
         init_cfg=dict(
             type='Pretrained', 
-            checkpoint=checkpoint,
-            prefix='backbone.'),
-        ),
+            checkpoint=checkpoint_file,
+            prefix='backbone.')),
 
     panoptic_head=dict(
         type='Mask2FormerHead',
-        # in_channels=[256, 512, 1024, 2048],  # pass to pixel_decoder inside
-        in_channels=[192]*4,
+        in_channels=[1024]*4,
         strides=[4, 8, 16, 32],
         feat_channels=256,
         out_channels=256,
@@ -152,8 +149,6 @@ model = dict(
     init_cfg=None)
 
 
-
-
 # ----- coco_instance.py -----
 # dataset settings
 # data_root = '/nfs/home/3002_hehui/xmx/COCO2017/'
@@ -196,7 +191,6 @@ train_dataloader = dict(
         pipeline=train_pipeline,
         backend_args=backend_args))
 
-
 val_dataloader = dict(
     batch_size=batch_size,
     num_workers=batch_size,
@@ -230,7 +224,6 @@ test_evaluator = val_evaluator
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=max_epochs, val_interval=val_interval)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
-
 
 # learning rate
 param_scheduler = [
@@ -269,7 +262,8 @@ optim_wrapper = dict(
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
-# auto_scale_lr = dict(enable=False, base_batch_size=16)
+auto_scale_lr = dict(enable=False, base_batch_size=16)
+
 
 
 # ----- default_runtime -----
@@ -299,10 +293,10 @@ vis_backends = [dict(type='LocalVisBackend'),
                      init_kwargs=dict(
                          project='pure-seg',
                          name=\
-    f'mask2former_eva-2-tiny_lr={start_lr}_nwpu_{max_epochs}e',
+    f'mask2former_dinov2-large_lr={start_lr}_nwpu_{max_epochs}e',
+                         tags=['nwpu', 'mask2former', 'dinov2', 'large'],
                          group='mask2former',
-                         resume=True
-                         
+                        #  resume=True
         )
     )
 ]
@@ -315,9 +309,5 @@ log_level = 'INFO'
 # # load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_dinov2_1x-wandb_nwpu/last_checkpoint'  # 从给定路径加载模型检查点作为预训练模型。这不会恢复训练。
 # load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_dinov2_nwpu_cosineannealinglr/best_coco_bbox_mAP_epoch_95.pth'
 # resume = True  # 是否从 `load_from` 中定义的检查点恢复。 如果 `load_from` 为 None，它将恢复 `work_dir` 中的最新检查点。
-
-
-
-
 
 

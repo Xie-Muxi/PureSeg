@@ -1,10 +1,12 @@
+pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth'  # noqa
+
 # runtime settings
 max_epochs = 300
 batch_size = 8
 start_lr = 0.01
 val_interval = 5
 
-custom_imports = dict(imports=['mmpretrain.models'], allow_failed_imports=False)
+# custom_imports = dict(imports=['mmpretrain.models','projects.OneFormercon.oneformer'], allow_failed_imports=False)
 # ------ model settings ------
 image_size = (1024, 1024)
 
@@ -23,36 +25,50 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 num_queries = 60
 
-from mmpretrain.models.backbones import ViTEVA02
-
-checkpoint = 'https://download.openmmlab.com/mmpretrain/v1.0/eva02/eva02-tiny-p14_pre_in21k_20230505-d703e7b1.pth'  # noqa
+# from projects.OneFormer_dev.oneformer import OneFormer
+depths = [2, 2, 6, 2]
 model = dict(
-    type='Mask2Former',
+    type='OneFormer',
     data_preprocessor=data_preprocessor,
     backbone=dict(
-        type=ViTEVA02,
-        arch='tiny',
-        img_size=image_size,
-        patch_size=14,
-        final_norm=False,
-        out_type='featmap',
+        _delete_=True,
+        type='SwinTransformer',
+        embed_dims=96,
+        depths=depths,
+        num_heads=[3, 6, 12, 24],
+        window_size=7,
+        mlp_ratio=4,
+        qkv_bias=True,
+        qk_scale=None,
+        drop_rate=0.,
+        attn_drop_rate=0.,
+        drop_path_rate=0.3,
+        patch_norm=True,
         out_indices=(0, 1, 2, 3),
-        init_cfg=dict(
-            type='Pretrained', 
-            checkpoint=checkpoint,
-            prefix='backbone.'),
-        ),
+        with_cp=False,
+        convert_weights=True,
+        frozen_stages=-1,
+        init_cfg=dict(type='Pretrained', checkpoint=pretrained)),
 
     panoptic_head=dict(
-        type='Mask2FormerHead',
-        # in_channels=[256, 512, 1024, 2048],  # pass to pixel_decoder inside
-        in_channels=[192]*4,
+        type='OneFormerHead',
+        in_channels=[96, 192, 384, 768],  # pass to pixel_decoder inside
         strides=[4, 8, 16, 32],
         feat_channels=256,
         out_channels=256,
         num_things_classes=num_things_classes,
         num_stuff_classes=num_stuff_classes,
-        num_queries=num_queries,
+        num_queries=150,
+        task='panoptic',
+        max_seq_len=77,
+        task_seq_len=77,
+        task_mlp=dict(
+            input_dim=77, hidden_dim=256, output_dim=256, num_layers=2),
+        text_encoder=dict(
+            context_length=77, width=256, layers=6, vocab_size=49408),
+        text_projector=dict(
+            input_dim=256, hidden_dim=256, output_dim=256, num_layers=2),
+        prompt_ctx=dict(num_embeddings=16, embedding_dim=256),
         num_transformer_feat_level=3,
         pixel_decoder=dict(
             type='MSDeformAttnPixelDecoder',
@@ -67,13 +83,13 @@ model = dict(
                         num_heads=8,
                         num_levels=3,
                         num_points=4,
-                        dropout=0.0,
+                        dropout=0.1,
                         batch_first=True),
                     ffn_cfg=dict(
                         embed_dims=256,
                         feedforward_channels=1024,
                         num_fcs=2,
-                        ffn_drop=0.0,
+                        ffn_drop=0.1,
                         act_cfg=dict(type='ReLU', inplace=True)))),
             positional_encoding=dict(num_feats=128, normalize=True)),
         enforce_decoder_input_project=False,
@@ -99,6 +115,16 @@ model = dict(
                     ffn_drop=0.0,
                     act_cfg=dict(type='ReLU', inplace=True))),
             init_cfg=None),
+        class_transformer=dict(
+            d_model=256,
+            nhead=8,
+            num_encoder_layers=0,
+            num_decoder_layers=2,
+            dim_feedforward=2048,
+            dropout=0.1,
+            normalize_before=False,
+            return_intermediate_dec=False),
+        use_task_norm=True,
         loss_cls=dict(
             type='CrossEntropyLoss',
             use_sigmoid=False,
@@ -117,7 +143,12 @@ model = dict(
             reduction='mean',
             naive_dice=True,
             eps=1.0,
-            loss_weight=5.0)),
+            loss_weight=5.0),
+        # loss_contrastive=dict(
+        #     type='ContrastiveLoss',
+        #     loss_weight=0.5,
+        #     contrast_temperature=0.07)
+            ),
     panoptic_fusion_head=dict(
         type='MaskFormerFusionHead',
         num_things_classes=num_things_classes,
@@ -144,14 +175,12 @@ model = dict(
         semantic_on=False,
         instance_on=True,
         # max_per_image is for instance segmentation.
-        max_per_image=100,
+        max_per_image=150,
         iou_thr=0.8,
         # In Mask2Former's panoptic postprocessing,
         # it will filter mask area where score is less than 0.5 .
         filter_low_score=True),
     init_cfg=None)
-
-
 
 
 # ----- coco_instance.py -----
@@ -180,6 +209,20 @@ test_pipeline = [
 from mmdet.datasets import NWPUInsSegDataset
 dataset_type = NWPUInsSegDataset
 data_root = '/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset'
+# train_dataloader = dict(
+#     batch_size=2,
+#     num_workers=2,
+#     persistent_workers=True,
+#     sampler=dict(type='DefaultSampler', shuffle=True),
+#     batch_sampler=dict(type='AspectRatioBatchSampler'),
+#     dataset=dict(
+#         type=dataset_type,
+#         data_root=data_root,
+#         ann_file='annotations/instances_train2017.json',
+#         data_prefix=dict(img='train2017/'),
+#         filter_cfg=dict(filter_empty_gt=True, min_size=32),
+#         pipeline=train_pipeline,
+#         backend_args=backend_args))
 
 train_dataloader = dict(
     batch_size=batch_size,
@@ -196,6 +239,21 @@ train_dataloader = dict(
         pipeline=train_pipeline,
         backend_args=backend_args))
 
+
+# val_dataloader = dict(
+#     batch_size=1,
+#     num_workers=2,
+#     persistent_workers=True,
+#     drop_last=False,
+#     sampler=dict(type='DefaultSampler', shuffle=False),
+#     dataset=dict(
+#         type=dataset_type,
+#         data_root=data_root,
+#         ann_file='annotations/instances_val2017.json',
+#         data_prefix=dict(img='val2017/'),
+#         test_mode=True,
+#         pipeline=test_pipeline,
+#         backend_args=backend_args))
 
 val_dataloader = dict(
     batch_size=batch_size,
@@ -231,7 +289,6 @@ train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=max_epochs, val_interval
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
-
 # learning rate
 param_scheduler = [
     dict(
@@ -253,23 +310,42 @@ param_scheduler = [
     )
 ]
 
+
+# set all layers in backbone to lr_mult=0.1
+# set all norm layers, position_embeding,
+# query_embeding, level_embeding to decay_multi=0.0
+backbone_norm_multi = dict(lr_mult=0.1, decay_mult=0.0)
+backbone_embed_multi = dict(lr_mult=0.1, decay_mult=0.0)
+embed_multi = dict(lr_mult=1.0, decay_mult=0.0)
+custom_keys = {
+    'backbone': dict(lr_mult=0.1, decay_mult=1.0),
+    'backbone.patch_embed.norm': backbone_norm_multi,
+    'backbone.norm': backbone_norm_multi,
+    'absolute_pos_embed': backbone_embed_multi,
+    'relative_position_bias_table': backbone_embed_multi,
+    'query_embed': embed_multi,
+    'query_feat': embed_multi,
+    'level_embed': embed_multi
+}
+custom_keys.update({
+    f'backbone.stages.{stage_id}.blocks.{block_id}.norm': backbone_norm_multi
+    for stage_id, num_blocks in enumerate(depths)
+    for block_id in range(num_blocks)
+})
+custom_keys.update({
+    f'backbone.stages.{stage_id}.downsample.norm': backbone_norm_multi
+    for stage_id in range(len(depths) - 1)
+})
 # optimizer
 optim_wrapper = dict(
-    type='OptimWrapper',
-    # optimizer=dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-    # optimizer=dict(type='Adam', lr=0.005, weight_decay=0.0001)
-    optimizer=dict(
-        type='Adam', 
-        lr=start_lr, 
-        weight_decay=1e-4,
-    )
-)
+    paramwise_cfg=dict(custom_keys=custom_keys, norm_decay_mult=0.0))
 
 # Default setting for scaling LR automatically
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
-# auto_scale_lr = dict(enable=False, base_batch_size=16)
+auto_scale_lr = dict(enable=False, base_batch_size=16)
+
 
 
 # ----- default_runtime -----
@@ -297,12 +373,12 @@ env_cfg = dict(
 vis_backends = [dict(type='LocalVisBackend'), 
                 dict(type='WandbVisBackend',
                      init_kwargs=dict(
-                         project='pure-seg',
+                         project='dev',
                          name=\
-    f'mask2former_eva-2-tiny_lr={start_lr}_nwpu_{max_epochs}e',
-                         group='mask2former',
-                         resume=True
-                         
+    f'oneformer_dinov2-small_lr={start_lr}_nwpu_{max_epochs}e',
+                         group='oneformer',
+                         tags=['oneformer', 'dinov2', 'nwpu'],
+                        #  resume=True
         )
     )
 ]
@@ -315,9 +391,5 @@ log_level = 'INFO'
 # # load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_dinov2_1x-wandb_nwpu/last_checkpoint'  # 从给定路径加载模型检查点作为预训练模型。这不会恢复训练。
 # load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_dinov2_nwpu_cosineannealinglr/best_coco_bbox_mAP_epoch_95.pth'
 # resume = True  # 是否从 `load_from` 中定义的检查点恢复。 如果 `load_from` 为 None，它将恢复 `work_dir` 中的最新检查点。
-
-
-
-
 
 
