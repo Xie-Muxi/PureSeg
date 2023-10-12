@@ -1,5 +1,5 @@
 # runtime settings
-max_epochs = 500
+max_epochs = 300
 batch_size = 8
 start_lr = 0.01
 val_interval = 5
@@ -23,34 +23,30 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 num_queries = 60
 
-pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth'  # noqa
-depths = [2, 2, 6, 2]
+from mmpretrain.models.backbones import ViTEVA02
+
+checkpoint = 'https://download.openmmlab.com/mmpretrain/v1.0/eva02/eva02-tiny-p14_pre_in21k_20230505-d703e7b1.pth'  # noqa
 model = dict(
     type='Mask2Former',
     data_preprocessor=data_preprocessor,
-    
     backbone=dict(
-        type='SwinTransformer',
-        embed_dims=96,
-        depths=depths,
-        num_heads=[3, 6, 12, 24],
-        window_size=7,
-        mlp_ratio=4,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.,
-        attn_drop_rate=0.,
-        drop_path_rate=0.3,
-        patch_norm=True,
+        type=ViTEVA02,
+        arch='tiny',
+        img_size=image_size,
+        patch_size=14,
+        final_norm=False,
+        out_type='featmap',
         out_indices=(0, 1, 2, 3),
-        with_cp=False,
-        convert_weights=True,
-        frozen_stages=-1,
-        init_cfg=dict(type='Pretrained', checkpoint=pretrained)),
+        init_cfg=dict(
+            type='Pretrained', 
+            checkpoint=checkpoint,
+            prefix='backbone.'),
+        ),
+
     panoptic_head=dict(
         type='Mask2FormerHead',
         # in_channels=[256, 512, 1024, 2048],  # pass to pixel_decoder inside
-        in_channels=[96, 192, 384, 768], # pass to pixel_decoder inside
+        in_channels=[192]*4,
         strides=[4, 8, 16, 32],
         feat_channels=256,
         out_channels=256,
@@ -158,8 +154,6 @@ model = dict(
 
 
 
-
-
 # ----- coco_instance.py -----
 # dataset settings
 # data_root = '/nfs/home/3002_hehui/xmx/COCO2017/'
@@ -186,20 +180,6 @@ test_pipeline = [
 from mmdet.datasets import NWPUInsSegDataset
 dataset_type = NWPUInsSegDataset
 data_root = '/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset'
-# train_dataloader = dict(
-#     batch_size=2,
-#     num_workers=2,
-#     persistent_workers=True,
-#     sampler=dict(type='DefaultSampler', shuffle=True),
-#     batch_sampler=dict(type='AspectRatioBatchSampler'),
-#     dataset=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         ann_file='annotations/instances_train2017.json',
-#         data_prefix=dict(img='train2017/'),
-#         filter_cfg=dict(filter_empty_gt=True, min_size=32),
-#         pipeline=train_pipeline,
-#         backend_args=backend_args))
 
 train_dataloader = dict(
     batch_size=batch_size,
@@ -216,21 +196,6 @@ train_dataloader = dict(
         pipeline=train_pipeline,
         backend_args=backend_args))
 
-
-# val_dataloader = dict(
-#     batch_size=1,
-#     num_workers=2,
-#     persistent_workers=True,
-#     drop_last=False,
-#     sampler=dict(type='DefaultSampler', shuffle=False),
-#     dataset=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         ann_file='annotations/instances_val2017.json',
-#         data_prefix=dict(img='val2017/'),
-#         test_mode=True,
-#         pipeline=test_pipeline,
-#         backend_args=backend_args))
 
 val_dataloader = dict(
     batch_size=batch_size,
@@ -249,7 +214,6 @@ val_dataloader = dict(
         backend_args=backend_args)
 )
 
-
 test_dataloader = val_dataloader
 from mmdet.evaluation.metrics import CocoMetric
 val_evaluator = dict(
@@ -267,6 +231,7 @@ train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=max_epochs, val_interval
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
+
 # learning rate
 param_scheduler = [
     dict(
@@ -274,10 +239,11 @@ param_scheduler = [
     # dict(
     #     type='MultiStepLR',
     #     begin=0,
-    #     end=12,
+    #     end=max_epochs,
     #     by_epoch=True,
     #     milestones=[8, 11],
     #     gamma=0.1)
+    # Cosine Anneal
     dict(
         type='CosineAnnealingLR', 
         by_epoch=True, 
@@ -291,6 +257,7 @@ param_scheduler = [
 optim_wrapper = dict(
     type='OptimWrapper',
     # optimizer=dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
+    # optimizer=dict(type='Adam', lr=0.005, weight_decay=0.0001)
     optimizer=dict(
         type='Adam', 
         lr=start_lr, 
@@ -302,8 +269,7 @@ optim_wrapper = dict(
 #   - `enable` means enable scaling LR automatically
 #       or not by default.
 #   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
-auto_scale_lr = dict(enable=False, base_batch_size=16)
-
+# auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 
 # ----- default_runtime -----
@@ -331,9 +297,9 @@ env_cfg = dict(
 vis_backends = [dict(type='LocalVisBackend'), 
                 dict(type='WandbVisBackend',
                      init_kwargs=dict(
-                         project='dev',
+                         project='pure-seg',
                          name=\
-    f'mask2former_swin-tiny_lr={start_lr}_nwpu_{max_epochs}e',
+    f'mask2former_eva-2-tiny_lr={start_lr}_nwpu_{max_epochs}e',
                          group='mask2former',
                          resume=True
                          
@@ -346,6 +312,12 @@ visualizer = dict(
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 
 log_level = 'INFO'
-load_from = None
-resume = False
+# # load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_dinov2_1x-wandb_nwpu/last_checkpoint'  # 从给定路径加载模型检查点作为预训练模型。这不会恢复训练。
+# load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_dinov2_nwpu_cosineannealinglr/best_coco_bbox_mAP_epoch_95.pth'
+# resume = True  # 是否从 `load_from` 中定义的检查点恢复。 如果 `load_from` 为 None，它将恢复 `work_dir` 中的最新检查点。
+
+
+
+
+
 

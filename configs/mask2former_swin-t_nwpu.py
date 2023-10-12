@@ -23,30 +23,43 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 num_queries = 60
 
-pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth'  # noqa
+checkpoint = 'https://download.openmmlab.com/mmclassification/v0/swin-transformer/swin_tiny_224_b16x64_300e_imagenet_20210616_090925-66df6be6.pth'  # noqa
 depths = [2, 2, 6, 2]
 model = dict(
     type='Mask2Former',
     data_preprocessor=data_preprocessor,
     
+    # backbone=dict(
+    #     type='SwinTransformer',
+    #     embed_dims=96,
+    #     depths=depths,
+    #     num_heads=[3, 6, 12, 24],
+    #     window_size=7,
+    #     mlp_ratio=4,
+    #     qkv_bias=True,
+    #     qk_scale=None,
+    #     drop_rate=0.,
+    #     attn_drop_rate=0.,
+    #     drop_path_rate=0.3,
+    #     patch_norm=True,
+    #     out_indices=(0, 1, 2, 3),
+    #     with_cp=False,
+    #     convert_weights=True,
+    #     frozen_stages=-1,
+    #     init_cfg=dict(type='Pretrained', checkpoint=pretrained)),
     backbone=dict(
-        type='SwinTransformer',
-        embed_dims=96,
-        depths=depths,
-        num_heads=[3, 6, 12, 24],
-        window_size=7,
-        mlp_ratio=4,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.,
-        attn_drop_rate=0.,
-        drop_path_rate=0.3,
-        patch_norm=True,
+        type='mmpretrain.SwinTransformer', 
+        arch='tiny', 
+        img_size=224, 
+        # drop_path_rate=0.2,
+        drop_path_rate=0.3, # try different drop_path_rate
         out_indices=(0, 1, 2, 3),
-        with_cp=False,
-        convert_weights=True,
-        frozen_stages=-1,
-        init_cfg=dict(type='Pretrained', checkpoint=pretrained)),
+        init_cfg=dict(
+            type='Pretrained', 
+            checkpoint=checkpoint),
+        ),
+
+    
     panoptic_head=dict(
         type='Mask2FormerHead',
         # in_channels=[256, 512, 1024, 2048],  # pass to pixel_decoder inside
@@ -331,11 +344,11 @@ env_cfg = dict(
 vis_backends = [dict(type='LocalVisBackend'), 
                 dict(type='WandbVisBackend',
                      init_kwargs=dict(
-                         project='dev',
+                         project='pure-seg',
                          name=\
     f'mask2former_swin-tiny_lr={start_lr}_nwpu_{max_epochs}e',
                          group='mask2former',
-                         resume=True
+                        #  resume=True
                          
         )
     )

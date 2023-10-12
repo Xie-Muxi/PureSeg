@@ -1,5 +1,3 @@
-
-
 # runtime settings
 max_epochs = 300
 batch_size = 8
@@ -25,6 +23,8 @@ num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
 num_queries = 60
 
+from mmpretrain.models.backbones import ConvNeXt
+
 checkpoint_file = 'https://download.openmmlab.com/mmclassification/v0/convnext-v2/convnext-v2-tiny_3rdparty-fcmae_in1k_20230104-80513adc.pth'  # noqa
 model = dict(
     type='Mask2Former',
@@ -35,7 +35,8 @@ model = dict(
 
     backbone=dict(
         # _delete_=True,
-        type='mmpretrain.ConvNeXt',
+        # type='mmpretrain.ConvNeXt',
+        type=ConvNeXt,
         arch='tiny',
         out_indices=[0, 1, 2, 3],
         drop_path_rate=0.4,
