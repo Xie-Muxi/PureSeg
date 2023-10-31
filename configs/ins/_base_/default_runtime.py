@@ -1,12 +1,12 @@
-# define scope here.
-default_scope = 'rsseg'
+default_scope = 'mmdet'
 
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),
     logger=dict(type='LoggerHook', interval=50),
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(type='CheckpointHook', interval=1),
-    sampler_seed=dict(type='DistSamplerSeedHook'))
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    visualization=dict(type='DetVisualizationHook'))
 
 env_cfg = dict(
     cudnn_benchmark=False,
@@ -15,9 +15,8 @@ env_cfg = dict(
 )
 
 vis_backends = [dict(type='LocalVisBackend')]
-# Uncomment this line to use the custom .
-# visualizer = dict(
-#     type='CustomVisualizer', vis_backends=vis_backends, name='visualizer')
+visualizer = dict(
+    type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 
 log_level = 'INFO'

@@ -26,6 +26,16 @@ checkpoint = 'https://download.openmmlab.com/mmpretrain/v1.0/eva02/eva02-tiny-p1
 model = dict(
     type='EncoderDecoder',
     data_preprocessor=data_preprocessor,
+    # backbone=dict(
+    #     type='ResNet',
+    #     depth=50,
+    #     deep_stem=False,
+    #     num_stages=4,
+    #     out_indices=(0, 1, 2, 3),
+    #     frozen_stages=-1,
+    #     norm_cfg=dict(type='SyncBN', requires_grad=False),
+    #     style='pytorch',
+    #     init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
 
     backbone=dict(
         type=ViTEVA02,
@@ -152,6 +162,7 @@ model = dict(
     test_cfg=dict(mode='whole')
 )
 
+
 # dataset settings
 dataset_type = 'PotsdamDataset'
 data_root = 'data/potsdam'
@@ -231,14 +242,21 @@ optimizer = dict(
     type='AdamW', lr=0.0001, weight_decay=0.05, eps=1e-8, betas=(0.9, 0.999))
 
 
+#! try different lr in backbone
+custom_keys = {
+    'backbone': dict(lr_mult=0.1),
+}
+
+
 optim_wrapper = dict(
     type='OptimWrapper',
-    # optimizer=dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-    # optimizer=dict(type='Adam', lr=0.005, weight_decay=0.0001)
     optimizer=dict(
         type='Adam',
         lr=start_lr,
         weight_decay=1e-2,
+    ),
+    paramwise_cfg=dict(
+        custom_keys=custom_keys,
     )
 )
 
@@ -248,7 +266,6 @@ param_scheduler = [
     dict(
         type='LinearLR', start_factor=start_lr, by_epoch=False, begin=0, end=1),
 
-    # Cosine Anneal
     dict(
         type='CosineAnnealingLR',
         by_epoch=True,
@@ -273,6 +290,10 @@ default_hooks = dict(
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='SegVisualizationHook'))
 
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 
@@ -287,12 +308,11 @@ env_cfg = dict(
 vis_backends = [dict(type='LocalVisBackend'),
                 dict(type='WandbVisBackend',
                      init_kwargs=dict(
-                         project='pure-seg',
-                         name=f'mask2former_eva02-tiny_lr={start_lr}_{dataset_type}_{max_epochs}e',
+                         project='pure-seg2',
+                         name=f'mask2former_eva02-tiny_lr={start_lr}_{dataset_type}_{max_epochs}e_mult',
                          group='mask2former',
                          tags=['mask2former', 'eva02', 'potsdam'],
                          #  resume=True
-
                      )
                      )
                 ]

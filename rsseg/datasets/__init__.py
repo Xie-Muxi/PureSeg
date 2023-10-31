@@ -1,4 +1,7 @@
 from .datasets import WiderFaceDataset
-from .transforms import RetinaFacePipeline
+from .transformers import *
+from .aerorit import AeroRITDataSet
+from .nwpu import NWPUInsSegDataset
 
-__all__ = ['WiderFaceDataset', 'RetinaFacePipeline']
+__all__ = ['WiderFaceDataset', 'RetinaFacePipeline',
+           'AeroRITDataSet', 'NWPUInsSegDataset']

@@ -1,7 +1,7 @@
 from mmpretrain.models.backbones import ViTEVA02
 max_epochs = 300
 
-batch_size = 32
+batch_size = 16
 num_workers = batch_size
 start_lr = 0.01
 val_interval = 5
@@ -26,25 +26,35 @@ checkpoint = 'https://download.openmmlab.com/mmpretrain/v1.0/eva02/eva02-tiny-p1
 model = dict(
     type='EncoderDecoder',
     data_preprocessor=data_preprocessor,
-
     backbone=dict(
-        type=ViTEVA02,
-        arch='tiny',
-        img_size=crop_size,
-        patch_size=14,
-        final_norm=False,
-        out_type='featmap',
+        type='ResNet',
+        depth=50,
+        deep_stem=False,
+        num_stages=4,
         out_indices=(0, 1, 2, 3),
-        init_cfg=dict(
-            type='Pretrained',
-            checkpoint=checkpoint,
-            prefix='backbone.'),
-    ),
+        frozen_stages=-1,
+        norm_cfg=dict(type='SyncBN', requires_grad=False),
+        style='pytorch',
+        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
+
+    # backbone=dict(
+    #     type=ViTEVA02,
+    #     arch='tiny',
+    #     img_size=crop_size,
+    #     patch_size=14,
+    #     final_norm=False,
+    #     out_type='featmap',
+    #     out_indices=(0, 1, 2, 3),
+    #     init_cfg=dict(
+    #         type='Pretrained',
+    #         checkpoint=checkpoint,
+    #         prefix='backbone.'),
+    # ),
 
     decode_head=dict(
         type='Mask2FormerHead',
-        # in_channels=[256, 512, 1024, 2048],
-        in_channels=[192]*4,
+        in_channels=[256, 512, 1024, 2048],
+        # in_channels=[192]*4,
         strides=[4, 8, 16, 32],
         feat_channels=256,
         out_channels=256,
@@ -152,6 +162,24 @@ model = dict(
     test_cfg=dict(mode='whole')
 )
 
+# dataset config
+# train_pipeline = [
+#     dict(type='LoadImageFromFile'),
+#     dict(type='LoadAnnotations', reduce_zero_label=True),
+#     dict(
+#         type='RandomChoiceResize',
+#         scales=[int(512 * x * 0.1) for x in range(5, 21)],
+#         resize_type='ResizeShortestEdge',
+#         max_size=2048),
+#     dict(type='RandomCrop', crop_size=crop_size, cat_max_ratio=0.75),
+#     dict(type='RandomFlip', prob=0.5),
+#     dict(type='PhotoMetricDistortion'),
+#     dict(type='PackSegInputs')
+# ]
+
+
+# train_dataloader = dict(batch_size=2, dataset=dict(pipeline=train_pipeline))
+
 # dataset settings
 dataset_type = 'PotsdamDataset'
 data_root = 'data/potsdam'
@@ -230,6 +258,23 @@ embed_multi = dict(lr_mult=1.0, decay_mult=0.0)
 optimizer = dict(
     type='AdamW', lr=0.0001, weight_decay=0.05, eps=1e-8, betas=(0.9, 0.999))
 
+# optim_wrapper = dict(
+#     type='OptimWrapper',
+#     # optimizer=optimizer,
+#     optimizer=dict(
+#         type='Adam',
+#         lr=start_lr,
+#         weight_decay=1e-4,
+#     )
+#     clip_grad=dict(max_norm=0.01, norm_type=2),
+#     paramwise_cfg=dict(
+#         custom_keys={
+#             'backbone': dict(lr_mult=0.1, decay_mult=1.0),
+#             'query_embed': embed_multi,
+#             'query_feat': embed_multi,
+#             'level_embed': embed_multi,
+#         },
+#         norm_decay_mult=0.0))
 
 optim_wrapper = dict(
     type='OptimWrapper',
@@ -247,7 +292,13 @@ optim_wrapper = dict(
 param_scheduler = [
     dict(
         type='LinearLR', start_factor=start_lr, by_epoch=False, begin=0, end=1),
-
+    # dict(
+    #     type='MultiStepLR',
+    #     begin=0,
+    #     end=max_epochs,
+    #     by_epoch=True,
+    #     milestones=[8, 11],
+    #     gamma=0.1)
     # Cosine Anneal
     dict(
         type='CosineAnnealingLR',
@@ -273,6 +324,10 @@ default_hooks = dict(
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='SegVisualizationHook'))
 
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 
@@ -288,9 +343,9 @@ vis_backends = [dict(type='LocalVisBackend'),
                 dict(type='WandbVisBackend',
                      init_kwargs=dict(
                          project='pure-seg',
-                         name=f'mask2former_eva02-tiny_lr={start_lr}_{dataset_type}_{max_epochs}e',
+                         name=f'mask2former_r50_lr={start_lr}_{dataset_type}_{max_epochs}e',
                          group='mask2former',
-                         tags=['mask2former', 'eva02', 'potsdam'],
+                         tags=['mask2former', 'Res50', 'potsdam'],
                          #  resume=True
 
                      )
