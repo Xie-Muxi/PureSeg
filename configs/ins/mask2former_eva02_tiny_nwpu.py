@@ -300,11 +300,10 @@ vis_backends = [dict(type='LocalVisBackend'),
                          project='pure-seg',
                          name=f'mask2former_eva-2-tiny_lr={start_lr}_nwpu_{max_epochs}e',
                          group='mask2former',
-                         resume=True
-
+                        #  resume=True
                      )
-                     )
-                ]
+    )
+]
 
 visualizer = dict(
     type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
