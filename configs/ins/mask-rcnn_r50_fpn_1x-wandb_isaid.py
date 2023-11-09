@@ -2,6 +2,7 @@ max_epochs = 50
 batch_size = 8
 start_lr = 0.01
 val_interval = 5
+log_interval = 1000
 
 # model settings
 model = dict(
@@ -169,8 +170,8 @@ train_dataloader = dict(
         pipeline=train_pipeline,
         backend_args=backend_args))
 val_dataloader = dict(
-    batch_size=1,
-    num_workers=2,
+    batch_size=batch_size,
+    num_workers=batch_size,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -230,8 +231,6 @@ optim_wrapper = dict(
 #   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=16)
 
-
-log_interval = 200
 
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),
