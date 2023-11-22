@@ -3,7 +3,7 @@ from mmdet.evaluation.metrics import CocoMetric
 from mmdet.datasets import NWPUInsSegDataset
 from mmpretrain.models.backbones import ViTEVA02
 max_epochs = 300
-batch_size = 8
+batch_size = 4
 start_lr = 0.01
 val_interval = 5
 
@@ -39,7 +39,7 @@ model = dict(
         patch_size=14,
         final_norm=False,
         out_type='featmap',
-        out_indices=(0, 1, 2, 3),
+        # out_indices=(0, 1, 2, 3),
         init_cfg=dict(
             type='Pretrained',
             checkpoint=checkpoint,
@@ -49,14 +49,16 @@ model = dict(
     panoptic_head=dict(
         type='Mask2FormerHead',
         # in_channels=[256, 512, 1024, 2048],  # pass to pixel_decoder inside
-        in_channels=[192]*4,
+        # in_channels=[192]*4,
+        # in_channels=[192, 384, 768, 1536],
+        in_channels=[192]*32,
         strides=[4, 8, 16, 32],
         feat_channels=256,
         out_channels=256,
         num_things_classes=num_things_classes,
         num_stuff_classes=num_stuff_classes,
         num_queries=num_queries,
-        num_transformer_feat_level=3,
+        num_transformer_feat_level=32,
         pixel_decoder=dict(
             type='MSDeformAttnPixelDecoder',
             num_outs=3,
@@ -295,14 +297,14 @@ env_cfg = dict(
 
 # vis_backends = [dict(type='LocalVisBackend')]
 vis_backends = [dict(type='LocalVisBackend'),
-                dict(type='WandbVisBackend',
-                     init_kwargs=dict(
-                         project='pure-seg',
-                         name=f'mask2former_eva-2-tiny_lr={start_lr}_nwpu_{max_epochs}e',
-                         group='mask2former',
-                        #  resume=True
-                     )
-    )
+    #             dict(type='WandbVisBackend',
+    #                  init_kwargs=dict(
+    #                      project='PureSeg',
+    #                      name=f'mask2former_eva-2-tiny_lr={start_lr}_nwpu_{max_epochs}e',
+    #                      group='mask2former',
+    #                     #  resume=True
+    #                  )
+    # )
 ]
 
 visualizer = dict(
@@ -313,3 +315,5 @@ log_level = 'INFO'
 # # load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_dinov2_1x-wandb_nwpu/last_checkpoint'  # 从给定路径加载模型检查点作为预训练模型。这不会恢复训练。
 # load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_dinov2_nwpu_cosineannealinglr/best_coco_bbox_mAP_epoch_95.pth'
 # resume = True  # 是否从 `load_from` 中定义的检查点恢复。 如果 `load_from` 为 None，它将恢复 `work_dir` 中的最新检查点。
+load_from = None
+resume=False

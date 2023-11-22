@@ -283,7 +283,7 @@ visualizer = dict(
 log_processor = dict(type='LogProcessor', window_size=log_interval, by_epoch=True)
 
 log_level = 'INFO'
-# load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_eva02_isaid/best_coco_bbox_mAP_epoch_30.pth'
-load_from = None
-resume = False
-# resume=True
+load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_r50_isaid/epoch_15.pth'
+# load_from = None
+# resume = False
+resume=True
