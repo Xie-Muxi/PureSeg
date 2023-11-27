@@ -1,50 +1,60 @@
-from mmpretrain.models.backbones import ViTEVA02
-max_epochs = 300
+# _base_ = [
+#     # '_base_/default_runtime.py',
+#     # '_base_/datasets/potsdam.py'
+# ]
 
-batch_size = 32
+from mmseg.evaluation import IoUMetric
+from rsseg.datasets import AeroRITDataSet
+# from rsseg.datasets.transformers import LoadHyperspectralImageFromFile
+from mmseg.datasets.transforms import LoadHyperspectralImageFromFile
+from mmpretrain.models import VisionTransformer
+
+max_epochs = 100
+
+batch_size = 4
 num_workers = batch_size
-start_lr = 0.01
+start_lr = 0.0001
 val_interval = 5
 
 custom_imports = dict(
     imports=['mmdet.models', 'mmpretrain.models'], allow_failed_imports=False)
 
 crop_size = (512, 512)
+num_bands = 51
 data_preprocessor = dict(
     type='SegDataPreProcessor',
-    mean=[123.675, 116.28, 103.53],
-    std=[58.395, 57.12, 57.375],
-    bgr_to_rgb=True,
+    mean=[0.0]*num_bands,
+    std=[1.0]*num_bands,
+    bgr_to_rgb=False,
     pad_val=0,
     seg_pad_val=255,
     size=crop_size,
     test_cfg=dict(size_divisor=32))
 num_classes = 6
+# num_bands = 51
 
-
-checkpoint = 'https://download.openmmlab.com/mmpretrain/v1.0/eva02/eva02-tiny-p14_pre_in21k_20230505-d703e7b1.pth'  # noqa
+checkpoint_file = 'https://download.openmmlab.com/mmpretrain/v1.0/dinov2/vit-small-p14_dinov2-pre_3rdparty_20230426-5641ca5a.pth'  # noqa
 model = dict(
     type='EncoderDecoder',
     data_preprocessor=data_preprocessor,
+    # data_preprocessor=None,
 
+    #! mmpretrain.models.backbones.vision_transformer
     backbone=dict(
-        type=ViTEVA02,
-        arch='tiny',
-        img_size=crop_size,
-        patch_size=14,
-        final_norm=False,
+        type='mmpretrain.VisionTransformer',
+        arch='dinov2-small',
+        out_indices=[0, 1, 2, 3],
         out_type='featmap',
-        out_indices=(0, 1, 2, 3),
+        in_channels=num_bands,  # Aligin with the aerorit dataset
         init_cfg=dict(
             type='Pretrained',
-            checkpoint=checkpoint,
-            prefix='backbone.'),
-    ),
+            checkpoint=checkpoint_file,
+            prefix='backbone.')),
 
     decode_head=dict(
         type='Mask2FormerHead',
         # in_channels=[256, 512, 1024, 2048],
-        in_channels=[192]*4,
+        in_channels=[384]*4,
         strides=[4, 8, 16, 32],
         feat_channels=256,
         out_channels=256,
@@ -153,35 +163,44 @@ model = dict(
 )
 
 # dataset settings
-dataset_type = 'PotsdamDataset'
-data_root = 'data/potsdam'
+dataset_type = AeroRITDataSet
+
+data_root = 'data/AeroRIT/aerorit'
 
 train_pipeline = [
-    dict(type='LoadImageFromFile'),
+    # dict(type='LoadImageFromFile'),
+    dict(type='LoadSingleRSImageFromFile'),
+    # dict(type='LoadHyperspectralImageFromFile',
+    #      imdecode_backend='tifffile'),  # !!
+    # dict(type='LoadTiffImageFromFile', imdecode_backend='tifffile'),
     dict(type='LoadAnnotations', reduce_zero_label=True),
-    dict(
-        type='RandomResize',
-        scale=(512, 512),
-        ratio_range=(0.5, 2.0),
-        keep_ratio=True),
+    # dict(type='LoadAnnotations', reduce_zero_label=False),
+    # dict(
+    #     type='RandomResize',
+    #     scale=(512, 512),
+    #     ratio_range=(0.5, 2.0),
+    #     keep_ratio=True),
     dict(type='RandomCrop', crop_size=crop_size, cat_max_ratio=0.75),
     dict(type='RandomFlip', prob=0.5),
-    dict(type='PhotoMetricDistortion'),
+    # dict(type='PhotoMetricDistortion'), #! 停用测光畸变，否则会涉及opencv库，无法读取高光谱图像
+    # dict(type='RandomCrop', crop_size=crop_size, cat_max_ratio=0.75),
+    # dict(type='RandomFlip', prob=0.5),
     dict(type='PackSegInputs')
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFile'),
+    # dict(type='LoadImageFromFile'),
+    dict(type='LoadSingleRSImageFromFile'),
     dict(type='Resize', scale=(512, 512), keep_ratio=True),
     # add loading annotation after ``Resize`` because ground truth
     # does not need to do resize data transform
-    dict(type='LoadAnnotations', reduce_zero_label=True),
+    # dict(type='LoadAnnotations', reduce_zero_label=True),
     dict(type='PackSegInputs')
 ]
 
 
 img_ratios = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75]
 tta_pipeline = [
-    dict(type='LoadImageFromFile', backend_args=None),
+    dict(type='LoadSingleRSImageFromFile', backend_args=None),
     dict(
         type='TestTimeAug',
         transforms=[
@@ -220,7 +239,7 @@ val_dataloader = dict(
         pipeline=test_pipeline))
 test_dataloader = val_dataloader
 
-val_evaluator = dict(type='IoUMetric', iou_metrics=[
+val_evaluator = dict(type=IoUMetric, iou_metrics=[
                      'mIoU', 'mDice', 'mFscore'])
 
 test_evaluator = val_evaluator
@@ -230,11 +249,8 @@ embed_multi = dict(lr_mult=1.0, decay_mult=0.0)
 optimizer = dict(
     type='AdamW', lr=0.0001, weight_decay=0.05, eps=1e-8, betas=(0.9, 0.999))
 
-
 optim_wrapper = dict(
     type='OptimWrapper',
-    # optimizer=dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-    # optimizer=dict(type='Adam', lr=0.005, weight_decay=0.0001)
     optimizer=dict(
         type='Adam',
         lr=start_lr,
@@ -248,7 +264,6 @@ param_scheduler = [
     dict(
         type='LinearLR', start_factor=start_lr, by_epoch=False, begin=0, end=1),
 
-    # Cosine Anneal
     dict(
         type='CosineAnnealingLR',
         by_epoch=True,
@@ -273,6 +288,10 @@ default_hooks = dict(
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='SegVisualizationHook'))
 
+# Default setting for scaling LR automatically
+#   - `enable` means enable scaling LR automatically
+#       or not by default.
+#   - `base_batch_size` = (8 GPUs) x (2 samples per GPU).
 auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 
@@ -288,9 +307,9 @@ vis_backends = [dict(type='LocalVisBackend'),
                 dict(type='WandbVisBackend',
                      init_kwargs=dict(
                          project='pure-seg',
-                         name=f'mask2former_eva02-tiny_lr={start_lr}_{dataset_type}_{max_epochs}e',
+                         name=f'mask2former_dinov2-small-tiny_lr={start_lr}_{dataset_type}_{max_epochs}e',
                          group='mask2former',
-                         tags=['mask2former', 'eva02', 'potsdam'],
+                         tags=['mask2former', 'dinov2', f'{dataset_type}'],
                          #  resume=True
 
                      )

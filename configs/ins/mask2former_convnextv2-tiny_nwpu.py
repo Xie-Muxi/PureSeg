@@ -122,6 +122,7 @@ model = dict(
             naive_dice=True,
             eps=1.0,
             loss_weight=5.0)),
+    
     panoptic_fusion_head=dict(
         type='MaskFormerFusionHead',
         num_things_classes=num_things_classes,
@@ -301,12 +302,11 @@ env_cfg = dict(
 vis_backends = [dict(type='LocalVisBackend'), 
                 dict(type='WandbVisBackend',
                      init_kwargs=dict(
-                         project='pure-seg',
+                         project='PureSeg',
                          name=\
     f'mask2former_convnextv2-tiny_lr={start_lr}_nwpu_{max_epochs}e',
                          group='mask2former',
                          resume=True
-                         
         )
     )
 ]

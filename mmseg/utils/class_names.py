@@ -439,6 +439,25 @@ def bdd100k_palette():
             [0, 0, 230], [119, 11, 32]]
 
 
+def aerorit_classes():
+    """AeroRIT class names for external use."""
+    return [
+        'Buildings', 'Vegetation', 'Roads', 'Water', 'Cars',
+        'Unspecified'
+    ]
+
+
+def aerorit_palette():
+    """AeroRIT palette for external use."""
+    return [[255, 0, 0],  # Buildings,
+            [0, 255, 0],  # Vegetation
+            [0, 0, 255],  # Roads
+            [0, 255, 255],  # Water
+            [255, 127, 80],  # Cars
+            [153, 0, 0],  # Unspecified
+            ]
+
+
 dataset_aliases = {
     'cityscapes': ['cityscapes'],
     'ade': ['ade', 'ade20k'],

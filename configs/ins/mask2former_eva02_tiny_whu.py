@@ -1,10 +1,15 @@
+
 # runtime settings
-max_epochs = 500
+from mmdet.evaluation.metrics import CocoMetric
+from mmdet.datasets import WhuBuildingDataset
+from mmpretrain.models.backbones import ViTEVA02
+max_epochs = 100
 batch_size = 8
 start_lr = 0.01
 val_interval = 5
 
-custom_imports = dict(imports=['mmpretrain.models'], allow_failed_imports=False)
+custom_imports = dict(imports=['mmpretrain.models'],
+                      allow_failed_imports=False)
 # ------ model settings ------
 image_size = (1024, 1024)
 
@@ -18,52 +23,34 @@ data_preprocessor = dict(
     mask_pad_value=0,
 )
 
-num_things_classes = 10
+num_things_classes = 1
 num_stuff_classes = 0
 num_classes = num_things_classes + num_stuff_classes
-num_queries = 60
+num_queries = 100
 
-checkpoint = 'https://download.openmmlab.com/mmclassification/v0/swin-transformer/swin_tiny_224_b16x64_300e_imagenet_20210616_090925-66df6be6.pth'  # noqa
-depths = [2, 2, 6, 2]
+checkpoint = 'https://download.openmmlab.com/mmpretrain/v1.0/eva02/eva02-tiny-p14_pre_in21k_20230505-d703e7b1.pth'  # noqa
 model = dict(
     type='Mask2Former',
     data_preprocessor=data_preprocessor,
-    
-    # backbone=dict(
-    #     type='SwinTransformer',
-    #     embed_dims=96,
-    #     depths=depths,
-    #     num_heads=[3, 6, 12, 24],
-    #     window_size=7,
-    #     mlp_ratio=4,
-    #     qkv_bias=True,
-    #     qk_scale=None,
-    #     drop_rate=0.,
-    #     attn_drop_rate=0.,
-    #     drop_path_rate=0.3,
-    #     patch_norm=True,
-    #     out_indices=(0, 1, 2, 3),
-    #     with_cp=False,
-    #     convert_weights=True,
-    #     frozen_stages=-1,
-    #     init_cfg=dict(type='Pretrained', checkpoint=pretrained)),
+
+    #! mmpretrain.models.backbones.vision_transformer
     backbone=dict(
-        type='mmpretrain.SwinTransformer', 
-        arch='tiny', 
-        img_size=image_size, 
-        # drop_path_rate=0.2,
-        drop_path_rate=0.3, # try different drop_path_rate
+        type=ViTEVA02,
+        arch='tiny',
+        img_size=image_size,
+        patch_size=14,
+        final_norm=False,
+        out_type='featmap',
         out_indices=(0, 1, 2, 3),
         init_cfg=dict(
-            type='Pretrained', 
-            checkpoint=checkpoint),
-        ),
+            type='Pretrained',
+            checkpoint=checkpoint,
+            prefix='backbone.'),
+    ),
 
-    
     panoptic_head=dict(
         type='Mask2FormerHead',
-        # in_channels=[256, 512, 1024, 2048],  # pass to pixel_decoder inside
-        in_channels=[96, 192, 384, 768], # pass to pixel_decoder inside
+        in_channels=[192]*4,
         strides=[4, 8, 16, 32],
         feat_channels=256,
         out_channels=256,
@@ -169,10 +156,6 @@ model = dict(
     init_cfg=None)
 
 
-
-
-
-
 # ----- coco_instance.py -----
 # dataset settings
 # data_root = '/nfs/home/3002_hehui/xmx/COCO2017/'
@@ -196,23 +179,10 @@ test_pipeline = [
                    'scale_factor'))
 ]
 
-from mmdet.datasets import NWPUInsSegDataset
-dataset_type = NWPUInsSegDataset
-data_root = '/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset'
-# train_dataloader = dict(
-#     batch_size=2,
-#     num_workers=2,
-#     persistent_workers=True,
-#     sampler=dict(type='DefaultSampler', shuffle=True),
-#     batch_sampler=dict(type='AspectRatioBatchSampler'),
-#     dataset=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         ann_file='annotations/instances_train2017.json',
-#         data_prefix=dict(img='train2017/'),
-#         filter_cfg=dict(filter_empty_gt=True, min_size=32),
-#         pipeline=train_pipeline,
-#         backend_args=backend_args))
+
+dataset_type = WhuBuildingDataset
+data_root = '/nfs/home/3002_hehui/xmx/data/WHU/3. The cropped image tiles and raster labels/'
+
 
 train_dataloader = dict(
     batch_size=batch_size,
@@ -223,27 +193,12 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='/nfs/home/3002_hehui/xmx/RS-SA/RSPrompter/data/NWPU/annotations/NWPU_instances_train.json',
-        data_prefix=dict(img='positive image set'),
+        ann_file='./ann/train.json',
+        data_prefix=dict(img='train/image'),
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=train_pipeline,
         backend_args=backend_args))
 
-
-# val_dataloader = dict(
-#     batch_size=1,
-#     num_workers=2,
-#     persistent_workers=True,
-#     drop_last=False,
-#     sampler=dict(type='DefaultSampler', shuffle=False),
-#     dataset=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         ann_file='annotations/instances_val2017.json',
-#         data_prefix=dict(img='val2017/'),
-#         test_mode=True,
-#         pipeline=test_pipeline,
-#         backend_args=backend_args))
 
 val_dataloader = dict(
     batch_size=batch_size,
@@ -254,21 +209,19 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset/nwpu-instances_val.json',
-        data_prefix=dict(img='positive image set'),
+        ann_file='./ann/val.json',
+        data_prefix=dict(img='val/image'),
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         test_mode=True,
         pipeline=test_pipeline,
         backend_args=backend_args)
 )
 
-
 test_dataloader = val_dataloader
-from mmdet.evaluation.metrics import CocoMetric
 val_evaluator = dict(
     type=CocoMetric,
     # ann_file=data_root + '/annotations/instances_val2017.json',
-    ann_file='/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset/nwpu-instances_val.json',
+    ann_file='/nfs/home/3002_hehui/xmx/data/WHU/3. The cropped image tiles and raster labels/ann/val.json',
     metric=['bbox', 'segm'],
     format_only=False,
     backend_args=backend_args)
@@ -276,7 +229,8 @@ test_evaluator = val_evaluator
 
 # ----- schedule_1x.py -----
 # training schedule for 1x
-train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=max_epochs, val_interval=val_interval)
+train_cfg = dict(type='EpochBasedTrainLoop',
+                 max_epochs=max_epochs, val_interval=val_interval)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
@@ -287,13 +241,14 @@ param_scheduler = [
     # dict(
     #     type='MultiStepLR',
     #     begin=0,
-    #     end=12,
+    #     end=max_epochs,
     #     by_epoch=True,
     #     milestones=[8, 11],
     #     gamma=0.1)
+    # Cosine Anneal
     dict(
-        type='CosineAnnealingLR', 
-        by_epoch=True, 
+        type='CosineAnnealingLR',
+        by_epoch=True,
         begin=1,
         T_max=max_epochs,
         end=max_epochs,
@@ -304,9 +259,10 @@ param_scheduler = [
 optim_wrapper = dict(
     type='OptimWrapper',
     # optimizer=dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
+    # optimizer=dict(type='Adam', lr=0.005, weight_decay=0.0001)
     optimizer=dict(
-        type='Adam', 
-        lr=start_lr, 
+        type='Adam',
+        lr=start_lr,
         weight_decay=1e-4,
     )
 )
@@ -318,7 +274,6 @@ optim_wrapper = dict(
 auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 
-
 # ----- default_runtime -----
 default_scope = 'mmdet'
 
@@ -328,7 +283,7 @@ default_hooks = dict(
     param_scheduler=dict(type='ParamSchedulerHook'),
     # checkpoint=dict(type='CheckpointHook', interval=4,max_keep_ckpts=3),
     checkpoint=dict(type='CheckpointHook',
-                    interval=val_interval, 
+                    interval=val_interval,
                     max_keep_ckpts=3,
                     save_best='auto'),
     sampler_seed=dict(type='DistSamplerSeedHook'),
@@ -341,24 +296,23 @@ env_cfg = dict(
 )
 
 # vis_backends = [dict(type='LocalVisBackend')]
-vis_backends = [dict(type='LocalVisBackend'), 
+vis_backends = [dict(type='LocalVisBackend'),
                 dict(type='WandbVisBackend',
                      init_kwargs=dict(
                          project='pure-seg',
-                         name=\
-    f'mask2former_swin-tiny_lr={start_lr}_nwpu_{max_epochs}e',
+                         name=f'mask2former_eva02-base_lr={start_lr}_whu_{max_epochs}e',
                          group='mask2former',
-                        #  resume=True
-                         
-        )
-    )
-]
+                         tags=['eva02', 'whu', 'mask2former'],
+                         resume=True
+                     )
+                     )
+                ]
 
 visualizer = dict(
     type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 
 log_level = 'INFO'
-load_from = None
-resume = False
-
+# # load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_dinov2_1x-wandb_nwpu/last_checkpoint'  # 从给定路径加载模型检查点作为预训练模型。这不会恢复训练。
+# load_from = '/nfs/home/3002_hehui/xmx/PureSeg/work_dirs/mask2former_dinov2_nwpu_cosineannealinglr/best_coco_bbox_mAP_epoch_95.pth'
+# resume = True  # 是否从 `load_from` 中定义的检查点恢复。 如果 `load_from` 为 None，它将恢复 `work_dir` 中的最新检查点。
