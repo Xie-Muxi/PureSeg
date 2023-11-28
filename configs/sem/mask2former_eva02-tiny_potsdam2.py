@@ -36,7 +36,7 @@ model = dict(
         patch_size=14,
         final_norm=False,
         out_type="featmap",
-        out_indices=(0, 1, 2, 3),
+        out_indices=(3, 6, 9, 11),
         init_cfg=dict(type="Pretrained", checkpoint=checkpoint, prefix="backbone."),
     ),
     decode_head=dict(
@@ -305,7 +305,7 @@ vis_backends = [
     dict(
         type="WandbVisBackend",
         init_kwargs=dict(
-            project="pure-seg",
+            project="PureSeg",
             name=f"mask2former_eva02-tiny_lr={start_lr}_{dataset_type}_{max_epochs}e",
             group="mask2former",
             tags=["mask2former", "eva02", "potsdam"],
