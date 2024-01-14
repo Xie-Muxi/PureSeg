@@ -6,8 +6,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import Conv2d, ConvModule
 from mmcv.cnn.bricks.transformer import MultiScaleDeformableAttention
-from mmengine.model import (BaseModule, ModuleList, caffe2_xavier_init,
-                            normal_init, xavier_init)
+from mmengine.model import (
+    BaseModule,
+    ModuleList,
+    caffe2_xavier_init,
+    normal_init,
+    xavier_init,
+)
 from torch import Tensor
 
 from mmdet.registry import MODELS
@@ -42,46 +47,51 @@ class MSDeformAttnPixelDecoder(BaseModule):
             dict], optional): Initialization config dict. Defaults to None.
     """
 
-    def __init__(self,
-                 in_channels: Union[List[int],
-                                    Tuple[int]] = [256, 512, 1024, 2048],
-                 strides: Union[List[int], Tuple[int]] = [4, 8, 16, 32],
-                 feat_channels: int = 256,
-                 out_channels: int = 256,
-                 num_outs: int = 3,
-                 norm_cfg: ConfigType = dict(type='GN', num_groups=32),
-                 act_cfg: ConfigType = dict(type='ReLU'),
-                 encoder: ConfigType = None,
-                 positional_encoding: ConfigType = dict(
-                     num_feats=128, normalize=True),
-                 init_cfg: OptMultiConfig = None) -> None:
+    def __init__(
+        self,
+        in_channels: Union[List[int], Tuple[int]] = [256, 512, 1024, 2048],
+        strides: Union[List[int], Tuple[int]] = [4, 8, 16, 32],
+        feat_channels: int = 256,
+        out_channels: int = 256,
+        num_outs: int = 3,
+        norm_cfg: ConfigType = dict(type="GN", num_groups=32),
+        act_cfg: ConfigType = dict(type="ReLU"),
+        encoder: ConfigType = None,
+        positional_encoding: ConfigType = dict(num_feats=128, normalize=True),
+        init_cfg: OptMultiConfig = None,
+    ) -> None:
         super().__init__(init_cfg=init_cfg)
         self.strides = strides
         self.num_input_levels = len(in_channels)
-        self.num_encoder_levels = \
-            encoder.layer_cfg.self_attn_cfg.num_levels
-        assert self.num_encoder_levels >= 1, \
-            'num_levels in attn_cfgs must be at least one'
+
+        self.num_encoder_levels = encoder.layer_cfg.self_attn_cfg.num_levels
+
+        assert (
+            self.num_encoder_levels >= 1
+        ), "num_levels in attn_cfgs must be at least one"
         input_conv_list = []
         # from top to down (low to high resolution)
-        for i in range(self.num_input_levels - 1,
-                       self.num_input_levels - self.num_encoder_levels - 1,
-                       -1):
+        for i in range(
+            self.num_input_levels - 1,
+            self.num_input_levels - self.num_encoder_levels - 1,
+            -1,
+        ):
+            # print("i", i)
             input_conv = ConvModule(
                 in_channels[i],
                 feat_channels,
                 kernel_size=1,
                 norm_cfg=norm_cfg,
                 act_cfg=None,
-                bias=True)
+                bias=True,
+            )
             input_conv_list.append(input_conv)
         self.input_convs = ModuleList(input_conv_list)
 
         self.encoder = Mask2FormerTransformerEncoder(**encoder)
         self.postional_encoding = SinePositionalEncoding(**positional_encoding)
         # high resolution to low resolution
-        self.level_encoding = nn.Embedding(self.num_encoder_levels,
-                                           feat_channels)
+        self.level_encoding = nn.Embedding(self.num_encoder_levels, feat_channels)
 
         # fpn-like structure
         self.lateral_convs = ModuleList()
@@ -89,15 +99,15 @@ class MSDeformAttnPixelDecoder(BaseModule):
         self.use_bias = norm_cfg is None
         # from top to down (low to high resolution)
         # fpn for the rest features that didn't pass in encoder
-        for i in range(self.num_input_levels - self.num_encoder_levels - 1, -1,
-                       -1):
+        for i in range(self.num_input_levels - self.num_encoder_levels - 1, -1, -1):
             lateral_conv = ConvModule(
                 in_channels[i],
                 feat_channels,
                 kernel_size=1,
                 bias=self.use_bias,
                 norm_cfg=norm_cfg,
-                act_cfg=None)
+                act_cfg=None,
+            )
             output_conv = ConvModule(
                 feat_channels,
                 feat_channels,
@@ -106,12 +116,14 @@ class MSDeformAttnPixelDecoder(BaseModule):
                 padding=1,
                 bias=self.use_bias,
                 norm_cfg=norm_cfg,
-                act_cfg=act_cfg)
+                act_cfg=act_cfg,
+            )
             self.lateral_convs.append(lateral_conv)
             self.output_convs.append(output_conv)
 
         self.mask_feature = Conv2d(
-            feat_channels, out_channels, kernel_size=1, stride=1, padding=0)
+            feat_channels, out_channels, kernel_size=1, stride=1, padding=0
+        )
 
         self.num_outs = num_outs
         self.point_generator = MlvlPointGenerator(strides)
@@ -120,10 +132,8 @@ class MSDeformAttnPixelDecoder(BaseModule):
         """Initialize weights."""
         for i in range(0, self.num_encoder_levels):
             xavier_init(
-                self.input_convs[i].conv,
-                gain=1,
-                bias=0,
-                distribution='uniform')
+                self.input_convs[i].conv, gain=1, bias=0, distribution="uniform"
+            )
 
         for i in range(0, self.num_input_levels - self.num_encoder_levels):
             caffe2_xavier_init(self.lateral_convs[i].conv, bias=0)
@@ -165,19 +175,22 @@ class MSDeformAttnPixelDecoder(BaseModule):
             level_idx = self.num_input_levels - i - 1
             feat = feats[level_idx]
             feat_projected = self.input_convs[i](feat)
-            h, w = feat.shape[-2:]
+            feat_hw = torch._shape_as_tensor(feat)[2:].to(feat.device)
 
             # no padding
             padding_mask_resized = feat.new_zeros(
-                (batch_size, ) + feat.shape[-2:], dtype=torch.bool)
+                (batch_size,) + feat.shape[-2:], dtype=torch.bool
+            )
             pos_embed = self.postional_encoding(padding_mask_resized)
             level_embed = self.level_encoding.weight[i]
             level_pos_embed = level_embed.view(1, -1, 1, 1) + pos_embed
             # (h_i * w_i, 2)
             reference_points = self.point_generator.single_level_grid_priors(
-                feat.shape[-2:], level_idx, device=feat.device)
+                feat.shape[-2:], level_idx, device=feat.device
+            )
             # normalize
-            factor = feat.new_tensor([[w, h]]) * self.strides[level_idx]
+            feat_wh = feat_hw.unsqueeze(0).flip(dims=[0, 1])
+            factor = feat_wh * self.strides[level_idx]
             reference_points = reference_points / factor
 
             # shape (batch_size, c, h_i, w_i) -> (h_i * w_i, batch_size, c)
@@ -188,28 +201,29 @@ class MSDeformAttnPixelDecoder(BaseModule):
             encoder_input_list.append(feat_projected)
             padding_mask_list.append(padding_mask_resized)
             level_positional_encoding_list.append(level_pos_embed)
-            spatial_shapes.append(feat.shape[-2:])
+            spatial_shapes.append(feat_hw)
             reference_points_list.append(reference_points)
         # shape (batch_size, total_num_queries),
         # total_num_queries=sum([., h_i * w_i,.])
         padding_masks = torch.cat(padding_mask_list, dim=1)
         # shape (total_num_queries, batch_size, c)
         encoder_inputs = torch.cat(encoder_input_list, dim=1)
-        level_positional_encodings = torch.cat(
-            level_positional_encoding_list, dim=1)
-        device = encoder_inputs.device
+        level_positional_encodings = torch.cat(level_positional_encoding_list, dim=1)
         # shape (num_encoder_levels, 2), from low
         # resolution to high resolution
-        spatial_shapes = torch.as_tensor(
-            spatial_shapes, dtype=torch.long, device=device)
+        num_queries_per_level = [e[0] * e[1] for e in spatial_shapes]
+        spatial_shapes = torch.cat(spatial_shapes).view(-1, 2)
         # shape (0, h_0*w_0, h_0*w_0+h_1*w_1, ...)
-        level_start_index = torch.cat((spatial_shapes.new_zeros(
-            (1, )), spatial_shapes.prod(1).cumsum(0)[:-1]))
+        level_start_index = torch.cat(
+            (spatial_shapes.new_zeros((1,)), spatial_shapes.prod(1).cumsum(0)[:-1])
+        )
         reference_points = torch.cat(reference_points_list, dim=0)
         reference_points = reference_points[None, :, None].repeat(
-            batch_size, 1, self.num_encoder_levels, 1)
+            batch_size, 1, self.num_encoder_levels, 1
+        )
         valid_radios = reference_points.new_ones(
-            (batch_size, self.num_encoder_levels, 2))
+            (batch_size, self.num_encoder_levels, 2)
+        )
         # shape (num_total_queries, batch_size, c)
         memory = self.encoder(
             query=encoder_inputs,
@@ -218,30 +232,27 @@ class MSDeformAttnPixelDecoder(BaseModule):
             spatial_shapes=spatial_shapes,
             reference_points=reference_points,
             level_start_index=level_start_index,
-            valid_ratios=valid_radios)
+            valid_ratios=valid_radios,
+        )
         # (batch_size, c, num_total_queries)
         memory = memory.permute(0, 2, 1)
 
         # from low resolution to high resolution
-        num_queries_per_level = [e[0] * e[1] for e in spatial_shapes]
         outs = torch.split(memory, num_queries_per_level, dim=-1)
         outs = [
-            x.reshape(batch_size, -1, spatial_shapes[i][0],
-                      spatial_shapes[i][1]) for i, x in enumerate(outs)
+            x.reshape(batch_size, -1, spatial_shapes[i][0], spatial_shapes[i][1])
+            for i, x in enumerate(outs)
         ]
 
-        for i in range(self.num_input_levels - self.num_encoder_levels - 1, -1,
-                       -1):
+        for i in range(self.num_input_levels - self.num_encoder_levels - 1, -1, -1):
             x = feats[i]
             cur_feat = self.lateral_convs[i](x)
             y = cur_feat + F.interpolate(
-                outs[-1],
-                size=cur_feat.shape[-2:],
-                mode='bilinear',
-                align_corners=False)
+                outs[-1], size=cur_feat.shape[-2:], mode="bilinear", align_corners=False
+            )
             y = self.output_convs[i](y)
             outs.append(y)
-        multi_scale_features = outs[:self.num_outs]
+        multi_scale_features = outs[: self.num_outs]
 
         mask_feature = self.mask_feature(outs[-1])
         return mask_feature, multi_scale_features

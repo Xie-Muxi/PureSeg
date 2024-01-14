@@ -14,6 +14,7 @@ from .conditional_detr_head import ConditionalDETRHead
 from .corner_head import CornerHead
 from .dab_detr_head import DABDETRHead
 from .ddod_head import DDODHead
+from .ddq_detr_head import DDQDETRHead
 from .deformable_detr_head import DeformableDETRHead
 from .detr_head import DETRHead
 from .dino_head import DINOHead
@@ -25,6 +26,7 @@ from .fsaf_head import FSAFHead
 from .ga_retina_head import GARetinaHead
 from .ga_rpn_head import GARPNHead
 from .gfl_head import GFLHead
+from .grounding_dino_head import GroundingDINOHead
 from .guided_anchor_head import FeatureAdaption, GuidedAnchorHead
 from .lad_head import LADHead
 from .ld_head import LDHead
@@ -50,21 +52,70 @@ from .yolact_head import YOLACTHead, YOLACTProtonet
 from .yolo_head import YOLOV3Head
 from .yolof_head import YOLOFHead
 from .yolox_head import YOLOXHead
+from .foundformer_head import FoundFormerHead
 
 __all__ = [
-    'AnchorFreeHead', 'AnchorHead', 'GuidedAnchorHead', 'FeatureAdaption',
-    'RPNHead', 'GARPNHead', 'RetinaHead', 'RetinaSepBNHead', 'GARetinaHead',
-    'SSDHead', 'FCOSHead', 'RepPointsHead', 'FoveaHead',
-    'FreeAnchorRetinaHead', 'ATSSHead', 'FSAFHead', 'NASFCOSHead',
-    'PISARetinaHead', 'PISASSDHead', 'GFLHead', 'CornerHead', 'YOLACTHead',
-    'YOLACTProtonet', 'YOLOV3Head', 'PAAHead', 'SABLRetinaHead',
-    'CentripetalHead', 'VFNetHead', 'StageCascadeRPNHead', 'CascadeRPNHead',
-    'EmbeddingRPNHead', 'LDHead', 'AutoAssignHead', 'DETRHead', 'YOLOFHead',
-    'DeformableDETRHead', 'CenterNetHead', 'YOLOXHead', 'SOLOHead',
-    'DecoupledSOLOHead', 'DecoupledSOLOLightHead', 'SOLOV2Head', 'LADHead',
-    'TOODHead', 'MaskFormerHead', 'Mask2FormerHead', 'DDODHead',
-    'CenterNetUpdateHead', 'RTMDetHead', 'RTMDetSepBNHead', 'CondInstBboxHead',
-    'CondInstMaskHead', 'RTMDetInsHead', 'RTMDetInsSepBNHead',
-    'BoxInstBboxHead', 'BoxInstMaskHead', 'ConditionalDETRHead', 'DINOHead',
-    'ATSSVLFusionHead', 'DABDETRHead'
+    "AnchorFreeHead",
+    "AnchorHead",
+    "GuidedAnchorHead",
+    "FeatureAdaption",
+    "RPNHead",
+    "GARPNHead",
+    "RetinaHead",
+    "RetinaSepBNHead",
+    "GARetinaHead",
+    "SSDHead",
+    "FCOSHead",
+    "RepPointsHead",
+    "FoveaHead",
+    "FreeAnchorRetinaHead",
+    "ATSSHead",
+    "FSAFHead",
+    "NASFCOSHead",
+    "PISARetinaHead",
+    "PISASSDHead",
+    "GFLHead",
+    "CornerHead",
+    "YOLACTHead",
+    "YOLACTProtonet",
+    "YOLOV3Head",
+    "PAAHead",
+    "SABLRetinaHead",
+    "CentripetalHead",
+    "VFNetHead",
+    "StageCascadeRPNHead",
+    "CascadeRPNHead",
+    "EmbeddingRPNHead",
+    "LDHead",
+    "AutoAssignHead",
+    "DETRHead",
+    "YOLOFHead",
+    "DeformableDETRHead",
+    "CenterNetHead",
+    "YOLOXHead",
+    "SOLOHead",
+    "DecoupledSOLOHead",
+    "DecoupledSOLOLightHead",
+    "SOLOV2Head",
+    "LADHead",
+    "TOODHead",
+    "MaskFormerHead",
+    "Mask2FormerHead",
+    "DDODHead",
+    "CenterNetUpdateHead",
+    "RTMDetHead",
+    "RTMDetSepBNHead",
+    "CondInstBboxHead",
+    "CondInstMaskHead",
+    "RTMDetInsHead",
+    "RTMDetInsSepBNHead",
+    "BoxInstBboxHead",
+    "BoxInstMaskHead",
+    "ConditionalDETRHead",
+    "DINOHead",
+    "ATSSVLFusionHead",
+    "DABDETRHead",
+    "DDQDETRHead",
+    "GroundingDINOHead",
+    "FoundFormerHead",
 ]
