@@ -1,0 +1,14 @@
+{
+    "folders": [
+      {
+        "path": "."
+      },
+    ],
+    "settings": {
+      "git.ignoreLimitWarning": true,
+      "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+      }
+    }
+  }
+  

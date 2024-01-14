@@ -10,7 +10,7 @@ from .coco_caption import CocoCaptionDataset
 from .coco_panoptic import CocoPanopticDataset
 from .coco_semantic import CocoSegDataset
 from .crowdhuman import CrowdHumanDataset
-from .dataset_wrappers import MultiImageMixDataset
+from .dataset_wrappers import ConcatDataset, MultiImageMixDataset
 from .deepfashion import DeepFashionDataset
 from .dsdl import DSDLDetDataset
 from .isaid import iSAIDDataset
@@ -24,11 +24,11 @@ from .samplers import (AspectRatioBatchSampler, ClassAwareSampler,
                        GroupMultiSourceSampler, MultiSourceSampler,
                        TrackAspectRatioBatchSampler, TrackImgSampler)
 from .utils import get_loading_pipeline
+from .v3det import V3DetDataset
 from .voc import VOCDataset
 from .wider_face import WIDERFaceDataset
 from .xml_style import XMLDataset
 from .youtube_vis_dataset import YouTubeVISDataset
-
 from .nwpu import NWPUInsSegDataset
 from .whu_building import WhuBuildingDataset
 
@@ -44,5 +44,6 @@ __all__ = [
     'ReIDDataset', 'YouTubeVISDataset', 'TrackAspectRatioBatchSampler',
     'ADE20KPanopticDataset', 'CocoCaptionDataset', 'RefCocoDataset',
     'BaseSegDataset', 'ADE20KSegDataset', 'CocoSegDataset',
-    'ADE20KInstanceDataset', 'iSAIDDataset', 'NWPUInsSegDataset', 'WhuBuildingDataset'
+    'ADE20KInstanceDataset', 'iSAIDDataset', 'V3DetDataset', 'ConcatDataset',
+    'NWPUInsSegDataset', 'WhuBuildingDataset'
 ]
