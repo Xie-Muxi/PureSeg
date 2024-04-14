@@ -178,7 +178,7 @@ test_pipeline = [
     ),
 ]
 
-from mmdet.datasets import NWPUInsSegDataset
+from rsseg.datasets import NWPUInsSegDataset
 
 dataset_type = NWPUInsSegDataset
 data_root = "/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset"

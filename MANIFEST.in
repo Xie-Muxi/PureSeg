@@ -1,5 +1,5 @@
 include requirements/*.txt
-include mmengine_template/.mim/model-index.yml
-include mmengine_template/.mim/demo/*/*
-recursive-include mmengine_template/.mim/configs *.py *.yml
-recursive-include mmengine_template/.mim/tools *.sh *.py
+include rsseg/.mim/model-index.yml
+include rsseg/.mim/demo/*/*
+recursive-include rsseg/.mim/configs *.py *.yml
+recursive-include rsseg/.mim/tools *.sh *.py
