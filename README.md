@@ -6,7 +6,7 @@ Experimental remote sensing segmentation project based on mmengine-template
 ### Please install Pytorch2.x, mmcv2.0 firstly
 
 ```shell
-git clone https://github.com/Xie-Muxi/PureSeg.git
+git clone https://github.com/Xie-Muxi/PureSeg.git 
 cd PureSeg
 pip install -e .
 
@@ -16,7 +16,7 @@ ln -s ${data_path} ./data # We recommend using symbolic link data to "./data"
 ```
 
 
-## --------------- MMEngine-Template ---------------
+### --------------- MMEngine-Template ---------------
 ## Introduction
 
 This branch is a refactored version of [PyTorch_Retinaface](https://github.com/biubug6/Pytorch_Retinaface), based on the **mmengine-template**. I would like to express my gratitude to the creators of PyTorch_Retinaface for their excellent work on implementing RetinaFace using PyTorch. Their project has been immensely helpful for developers interested in studying and applying RetinaFace.
