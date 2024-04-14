@@ -1,2 +1,5 @@
-mmcv
+mmcv>=2.1.0
 mmengine
+pycocotools
+tqdm
+shapely
