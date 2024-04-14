@@ -242,13 +242,6 @@ test_cfg = dict(type="TestLoop")
 # learning rate
 param_scheduler = [
     dict(type="LinearLR", start_factor=start_lr, by_epoch=False, begin=0, end=1),
-    # dict(
-    #     type='MultiStepLR',
-    #     begin=0,
-    #     end=max_epochs,
-    #     by_epoch=True,
-    #     milestones=[8, 11],
-    #     gamma=0.1)
     # Cosine Anneal
     dict(
         type="CosineAnnealingLR",
@@ -262,8 +255,6 @@ param_scheduler = [
 # optimizer
 optim_wrapper = dict(
     type="OptimWrapper",
-    # optimizer=dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-    # optimizer=dict(type='Adam', lr=0.005, weight_decay=0.0001)
     optimizer=dict(
         type="Adam",
         lr=start_lr,
@@ -305,7 +296,7 @@ vis_backends = [
     dict(
         type="WandbVisBackend",
         init_kwargs=dict(
-            project="pure-seg",
+            project="PureSeg",
             name=f"mask2former_dinov2-large_lr={start_lr}_nwpu_{max_epochs}e",
             tags=["nwpu", "mask2former", "dinov2", "large"],
             group="mask2former",
