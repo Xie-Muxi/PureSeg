@@ -3,7 +3,7 @@
 Experimental remote sensing segmentation project based on mmengine-template
 
 # Installation
-### Please install Pytorch2.x, mmcv2.0 first
+### Please install Pytorch2.x, mmcv2.0 firstly
 
 ```shell
 git clone https://github.com/Xie-Muxi/PureSeg.git
