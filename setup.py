@@ -157,13 +157,13 @@ if __name__ == '__main__':
     setup(
         name='rsseg',
         version=get_version(),
-        description='MMEngine Template',
+        description='rsseg of PureSeg',
         long_description=readme(),
         long_description_content_type='text/markdown',
         author='{author name}',
-        author_email='{your email}',
-        keywords='mmengine, template',
-        url='https://github.com/user_name/mmengine_template',
+        author_email='{mx-xie@outlook.com}',
+        keywords='mmengine, rsseg, PureSeg, segmentation, instance segmentation, object detection',
+        url='https://github.com/Xie-Muxi/PureSeg',
         packages=find_packages(exclude=('configs', 'tools', 'demo')),
         include_package_data=True,
         classifiers=[
