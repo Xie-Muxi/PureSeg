@@ -5,7 +5,8 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Split COCO dataset into training and validation sets.')
-    parser.add_argument('--dataset-path', default='./data_dataset_coco/', help='The base path of the dataset.')
+    parser.add_argument('--data-path', default='./data/nwpu/NWPU/NWPU VHR-10 dataset', help='The base path of the dataset.')
+    parser.add_argument('--out-path', default='./data_dataset_coco/', help='The output path of the split dataset.')
     parser.add_argument('--split-ratio', type=float, default=0.7, help='The ratio of training set split.')
     return parser.parse_args()
 
@@ -61,8 +62,8 @@ def main():
     
     train, val = split_dataset(gt, args.split_ratio)
     
-    train_path = f"{args.dataset_path}instances_train2017.json"
-    val_path = f"{args.dataset_path}instances_val2017.json"
+    train_path = f"{args.out_path}nwpu-instances_train.json"
+    val_path = f"{args.out_path}nwpu-instances_val.json"
     
     save_annotations(train, train_path)
     save_annotations(val, val_path)
