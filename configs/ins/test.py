@@ -1,6 +1,7 @@
 # runtime settings
 from mmdet.evaluation.metrics import CocoMetric
-from mmdet.datasets import NWPUInsSegDataset
+
+# from mmdet.datasets import NWPUInsSegDataset
 
 max_epochs = 2
 batch_size = 2
@@ -200,7 +201,7 @@ test_pipeline = [
     ),
 ]
 
-dataset_type = NWPUInsSegDataset
+dataset_type = "NWPUInsSegDataset"
 data_root = "/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset"
 
 
