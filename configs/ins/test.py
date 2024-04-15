@@ -243,7 +243,6 @@ val_dataloader = dict(
 test_dataloader = val_dataloader
 val_evaluator = dict(
     type=CocoMetric,
-    # ann_file=data_root + '/annotations/instances_val2017.json',
     ann_file="/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset/nwpu-instances_val.json",
     metric=["bbox", "segm"],
     format_only=False,

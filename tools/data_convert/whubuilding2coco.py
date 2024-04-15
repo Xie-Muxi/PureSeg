@@ -5,7 +5,7 @@ import os.path as osp
 import cv2
 import mmcv
 import numpy as np
-import pycocotools.mask as maskUtils
+import pycocotools.mask as maskUtils  # type: ignore
 from mmengine.fileio import dump
 from mmengine.utils import (
     Timer,
@@ -114,7 +114,7 @@ def parse_args():
         description="Convert WHU Building annotations to COCO format"
     )
     parser.add_argument(
-        "--data-path", default="data/whu", help="WHU-Building data path"
+        "-d", "--data-path", default="data/whu", help="WHU-Building data path"
     )
     parser.add_argument("--img-dir", default="", type=str)
     parser.add_argument("--gt-dir", default="", type=str)
