@@ -96,6 +96,13 @@ def parse_args():
 
 def main():
     args = parse_args()
+    # print args
+    print(f"Data path: {args.data_path}")
+    print(f"Image directory: {args.img_dir}")
+    print(f"Ground truth directory: {args.gt_dir}")
+    print(f"Output directory: {args.out_dir}")
+    print(f"Number of processes: {args.nproc}")
+
     mkdir_or_exist(args.out_dir)
     for split in ["train", "val", "test"]:
         print(f"Processing {split} data...")
