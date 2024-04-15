@@ -3,3 +3,7 @@ mmengine
 pycocotools
 tqdm
 shapely
+terminaltables
+scipy
+wandb
+einops
