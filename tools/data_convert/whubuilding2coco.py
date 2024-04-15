@@ -113,9 +113,11 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Convert WHU Building annotations to COCO format"
     )
-    parser.add_argument("--whu_path", default="data/whu", help="WHU-Building data path")
-    parser.add_argument("--img-dir", default="imgs", type=str)
-    parser.add_argument("--gt-dir", default="imgs", type=str)
+    parser.add_argument(
+        "--data-path", default="data/whu", help="WHU-Building data path"
+    )
+    parser.add_argument("--img-dir", default="", type=str)
+    parser.add_argument("--gt-dir", default="", type=str)
     parser.add_argument(
         "-o", "--out-dir", default="data/whu/annotations", help="output path"
     )
