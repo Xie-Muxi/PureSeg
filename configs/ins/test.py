@@ -2,8 +2,8 @@
 from mmdet.evaluation.metrics import CocoMetric
 from mmdet.datasets import NWPUInsSegDataset
 
-max_epochs = 1
-batch_size = 1
+max_epochs = 2
+batch_size = 2
 start_lr = 0.01
 val_interval = 1
 
@@ -321,14 +321,15 @@ env_cfg = dict(
 # vis_backends = [dict(type='LocalVisBackend')]
 vis_backends = [
     dict(type="LocalVisBackend"),
-    # dict(type='WandbVisBackend',
-    #      init_kwargs=dict(
-    #          project='pure-seg',
-    #          name=f'mask2former_res50_lr={start_lr}_nwpu_{max_epochs}e',
-    #          group='mask2former',
-    #          #  resume=True
-    #      )
-    #      )
+    dict(
+        type="WandbVisBackend",
+        init_kwargs=dict(
+            project="PureSeg",
+            name=f"mask2former_res50_lr={start_lr}_nwpu_{max_epochs}e",
+            group="mask2former",
+            #  resume=True
+        ),
+    ),
 ]
 
 # from mmdet.visualization import DetLocalVisualizer

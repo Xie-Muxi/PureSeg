@@ -2,8 +2,8 @@
 from mmdet.evaluation.metrics import CocoMetric
 from mmdet.datasets import NWPUInsSegDataset
 
-max_epochs = 1
-batch_size = 1
+max_epochs = 2
+batch_size = 2
 start_lr = 0.01
 val_interval = 1
 
