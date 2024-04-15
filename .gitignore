@@ -103,8 +103,8 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-data/
-data
+data/*
+!data/README.md
 .vscode
 .idea
 .DS_Store
@@ -113,7 +113,7 @@ data
 *.pkl
 *.pkl.json
 *.log.json
-work_dirs/
+work_dirs
 
 # Pytorch
 *.pth

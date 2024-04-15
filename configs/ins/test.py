@@ -1,11 +1,12 @@
 # runtime settings
 from mmdet.evaluation.metrics import CocoMetric
-from mmdet.datasets import NWPUInsSegDataset
 
-max_epochs = 300
-batch_size = 8
+# from mmdet.datasets import NWPUInsSegDataset
+
+max_epochs = 2
+batch_size = 2
 start_lr = 0.01
-val_interval = 5
+val_interval = 1
 
 custom_imports = dict(
     imports=[
@@ -200,7 +201,7 @@ test_pipeline = [
     ),
 ]
 
-dataset_type = NWPUInsSegDataset
+dataset_type = "NWPUInsSegDataset"
 data_root = "/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset"
 
 
@@ -243,7 +244,6 @@ val_dataloader = dict(
 test_dataloader = val_dataloader
 val_evaluator = dict(
     type=CocoMetric,
-    # ann_file=data_root + '/annotations/instances_val2017.json',
     ann_file="/nfs/home/3002_hehui/xmx/data/NWPU/NWPU VHR-10 dataset/nwpu-instances_val.json",
     metric=["bbox", "segm"],
     format_only=False,
@@ -322,14 +322,15 @@ env_cfg = dict(
 # vis_backends = [dict(type='LocalVisBackend')]
 vis_backends = [
     dict(type="LocalVisBackend"),
-    # dict(type='WandbVisBackend',
-    #      init_kwargs=dict(
-    #          project='pure-seg',
-    #          name=f'mask2former_res50_lr={start_lr}_nwpu_{max_epochs}e',
-    #          group='mask2former',
-    #          #  resume=True
-    #      )
-    #      )
+    dict(
+        type="WandbVisBackend",
+        init_kwargs=dict(
+            project="PureSeg",
+            name=f"mask2former_res50_lr={start_lr}_nwpu_{max_epochs}e",
+            group="mask2former",
+            #  resume=True
+        ),
+    ),
 ]
 
 # from mmdet.visualization import DetLocalVisualizer
